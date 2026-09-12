@@ -1,0 +1,62 @@
+@{
+    ViewData["Title"] = "About Us";
+}
+
+<section class="hero" style="min-height: 260px;">
+    <div class="hero-overlay"></div>
+    <div class="container position-relative text-white py-5">
+        <h1 class="mb-2">About Online Computer Store</h1>
+        <p class="lead mb-0">Our Straight-forward advice, Honest Prices, and Genuiner Computers That Actually Fit How You Use Them.</p>
+    </div>
+</section>
+
+<div class="container my-5">
+    <div class="row g-5 align-items-center mb-5">
+        <div class="col-lg-7">
+            <h2 class="section-title">Our story</h2>
+            <p>
+                Our Online Computer Store started as a single shopfront with one simple idea: buying a computer
+                shouldn't feel like a guessing game. Since then we've grown into an online store carrying
+                laptops, desktops, monitors, and accessories from brands people actually trust while
+                keeping the same person-to-person approach we started with.
+            </p>
+            <p>
+                Every product on our shelves is one our team has used, tested, or would genuinely recommend
+                to a friend. We've also built the site to actually work the way a good store should: AI-assisted
+                search and comparison tools to help you find the right fit without wading through spec sheets,
+                real order tracking with a dedicated number for every purchase, and a real person checking every
+                message that comes through our Contact page, not just a form that disappears into nowhere.
+            </p>
+            <p class="text-muted small mb-0">
+
+            </p>
+        </div>
+        <div class="col-lg-5">
+            <img src="/images/store-showroom.jpg" class="img-fluid rounded shadow-sm" alt="Our showroom" />
+        </div>
+    </div>
+
+    <div class="row g-4 text-center value-strip py-4 mb-5">
+        <div class="col-md-4">
+            <span class="value-icon">🛠️</span>
+            <h6 class="mb-1">Our Expert-Tested Picks</h6>
+            <p class="text-muted small mb-0">Every product is vetted before it's placed on the shelf.</p>
+        </div>
+        <div class="col-md-4">
+            <span class="value-icon">🤝</span>
+            <h6 class="mb-1">Real People, Real Help, Original Products</h6>
+            <p class="text-muted small mb-0">AI tools for speed, a human team for anything trickier.</p>
+        </div>
+        <div class="col-md-4">
+            <span class="value-icon">🚚</span>
+            <h6 class="mb-1">Backed After The Sale</h6>
+            <p class="text-muted small mb-0">Order tracking, warranty support, and no disappearing act.</p>
+        </div>
+    </div>
+
+    <div class="ai-panel text-center">
+        <h6 class="text-teal text-uppercase small">Want to know more?</h6>
+        <p class="mb-3">Reach out any time — We'd genuinely like to hear from you.</p>
+        <a asp-controller="Home" asp-action="Contact" class="btn btn-cta">Please Get in touch</a>
+    </div>
+</div>

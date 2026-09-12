@@ -1,0 +1,85 @@
+@model ContactViewModel
+@{
+    ViewData["Title"] = "Contact Us";
+}
+
+<div class="container my-5">
+    <h3 class="section-title">Contact Us</h3>
+    <p class="text-muted mb-4">For any questions, or Anything else — Send us a message and we'll gladly get back to you the soonest.</p>
+
+    <div class="row g-5">
+        <div class="col-lg-7">
+            @if (TempData["ContactSuccess"] != null)
+            {
+                <div class="alert alert-success">
+                    Thanks — Your message has been sent. We'll be in touch. 
+                    God Bless you!
+                </div>
+            }
+            @if (TempData["ContactError"] != null)
+            {
+                <div class="alert alert-warning">
+                    @TempData["ContactError"]
+                </div>
+            }
+
+            <form asp-controller="Home" asp-action="Contact" method="post" novalidate>
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="mb-3">
+                    <label class="form-label" asp-for="Name"></label>
+                    <input class="form-control" asp-for="Name" />
+                    <span class="text-danger small" asp-validation-for="Name"></span>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" asp-for="Email"></label>
+                    <input class="form-control" asp-for="Email" />
+                    <span class="text-danger small" asp-validation-for="Email"></span>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" asp-for="Subject"></label>
+                    <input class="form-control" asp-for="Subject" />
+                    <span class="text-danger small" asp-validation-for="Subject"></span>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" asp-for="Message"></label>
+                    <textarea class="form-control" rows="5" asp-for="Message"></textarea>
+                    <span class="text-danger small" asp-validation-for="Message"></span>
+                </div>
+
+                <button type="submit" class="btn btn-cta">Send Message</button>
+            </form>
+
+            <p class="text-muted small mt-3 mb-0">
+                We'll reply to the email address you provide above — within one - three business days. 
+                God Bless you!
+            </p>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card p-4 mb-3">
+                <h5 class="mb-3">Our Stores</h5>
+                <div class="mb-3">
+                    <h6 class="text-teal text-uppercase small mb-1">Darling Harbour</h6>
+                    <p class="mb-1 small"><strong>Address</strong><br />12 Harbourside Walk, Darling Harbour, NSW 2000</p>
+                    <p class="mb-1 small"><strong>Phone</strong><br />(+61) 007-007-001</p>
+                    <p class="mb-0 small"><strong>Hours</strong><br />Mon–Fri: 8am – 7pm<br />Sat: 10am – 5pm<br />Sun: Closed for Church</p>
+                </div>
+                <hr />
+                <div>
+                    <h6 class="text-teal text-uppercase small mb-1">Parramatta</h6>
+                    <p class="mb-1 small"><strong>Address</strong><br />45 Church Street, Parramatta, NSW 2000</p>
+                    <p class="mb-1 small"><strong>Phone</strong><br />(+61) 007-007-002</p>
+                    <p class="mb-0 small"><strong>Hours</strong><br />Mon–Fri: 9am – 6pm<br />Sat: 10am – 4pm<br />Sun: Closed for Church</p>
+                </div>
+            </div>
+            <div class="card p-4">
+                <p class="mb-0"><strong>Email</strong><br />mrjamesbondjnr.007@yahoo.com.au</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

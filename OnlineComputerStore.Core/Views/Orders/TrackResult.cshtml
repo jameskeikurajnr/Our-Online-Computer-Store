@@ -1,0 +1,37 @@
+@{
+    var order = (Order)ViewBag.Order;
+    ViewData["Title"] = $"Order #{order.Id}";
+    var steps = new[] { "Processing", "Shipped", "Delivered" };
+    var currentIndex = System.Array.IndexOf(steps, order.Status);
+}
+<div class="container my-5" style="max-width:600px">
+    <h1 class="section-title">Order #@order.Id</h1>
+    <p class="text-muted">Placed @order.CreatedAt.ToString("d MMM yyyy")</p>
+    <p class="mb-4">
+        @if (order.FulfillmentMethod == "Pickup")
+        {
+            <text>🏬 Click &amp; Collect at <strong>@order.PickupLocation</strong></text>
+        }
+        else
+        {
+            <text>🚚 Shipping to: @order.Address</text>
+        }
+    </p>
+
+    <div class="order-timeline mb-4">
+        @for (var i = 0; i < steps.Length; i++)
+        {
+            <div class="timeline-step @(i <= currentIndex ? "active" : "")">
+                <span class="dot"></span>
+                <span>@steps[i]</span>
+            </div>
+        }
+    </div>
+
+    <div class="ai-panel">
+        <h6 class="text-teal text-uppercase small">AI Explanation</h6>
+        <p class="mb-0">@ViewBag.Explanation</p>
+    </div>
+
+    <a asp-action="Track" class="btn btn-outline-primary mt-4">Track Another</a>
+</div>

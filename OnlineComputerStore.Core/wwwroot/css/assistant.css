@@ -1,0 +1,37 @@
+#assistant-widget { position: fixed; bottom: 24px; right: 24px; z-index: 2000; }
+#assistant-button {
+  background: #f97316; color: #fff; border: none; width: 56px; height: 56px; border-radius: 50%;
+  font-size: 24px; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.25);
+  animation: pulse 3s infinite;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+  50% { box-shadow: 0 6px 18px rgba(249,115,22,.55); }
+}
+#assistant-panel {
+  position: absolute; bottom: 70px; right: 0; width: 320px; max-height: 440px;
+  background: #fff; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  display: none; flex-direction: column; overflow: hidden;
+}
+#assistant-panel.open { display: flex; }
+.assistant-header {
+  background: #14213d; color: #fff; padding: .75rem 1rem; display: flex; justify-content: space-between; align-items: center;
+}
+.assistant-header button { background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer; }
+#assistant-messages { flex: 1; overflow-y: auto; padding: .75rem; max-height: 280px; }
+.msg { margin: 6px 0; padding: 8px 12px; border-radius: 10px; max-width: 85%; font-size: .9rem; }
+.msg.user { background: #e0f7ff; margin-left: auto; text-align: right; }
+.msg.ai { background: #f0f2f5; }
+.assistant-input-row { display: flex; border-top: 1px solid #eee; }
+.assistant-input-row input { flex: 1; border: none; padding: .6rem; }
+.assistant-input-row input:focus { outline: none; }
+.assistant-input-row button {
+  border: none; background: #14b8a6; color: #04221d; padding: 0 1rem; font-weight: 600; cursor: pointer;
+}
+
+/* On narrow phones a fixed 320px panel pinned to the right edge can run off
+   the left side of the screen. Let it shrink to fit instead. */
+@media (max-width: 400px) {
+  #assistant-widget { right: 12px; bottom: 12px; }
+  #assistant-panel { width: calc(100vw - 24px); right: -12px; max-height: min(440px, 70vh); }
+}

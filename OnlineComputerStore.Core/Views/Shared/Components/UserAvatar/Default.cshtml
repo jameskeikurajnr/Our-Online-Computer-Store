@@ -1,0 +1,13 @@
+@model OnlineComputerStore.Core.Components.UserAvatarViewModel
+@if (!string.IsNullOrWhiteSpace(Model.PhotoUrl))
+{
+    @* data-avatar-lightbox triggers the click-to-enlarge handler in site.js — works
+       wherever this component is rendered (navbar, account pages) with no extra
+       wiring needed per page. *@
+    <img src="@Model.PhotoUrl" alt="Profile photo" data-avatar-lightbox="@Model.PhotoUrl"
+         style="width:@(Model.Size)px;height:@(Model.Size)px;border-radius:50%;object-fit:cover;display:inline-block;vertical-align:middle;cursor:zoom-in;" />
+}
+else
+{
+    <span style="width:@(Model.Size)px;height:@(Model.Size)px;border-radius:50%;background:var(--brand-teal);color:#04221d;font-weight:700;font-size:@(Model.FontSize)px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;">@Model.Initials</span>
+}

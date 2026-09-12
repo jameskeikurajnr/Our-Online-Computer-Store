@@ -1,0 +1,10 @@
+@{
+    ViewData["Title"] = "Checkout verification unavailable";
+}
+<div class="container my-5" style="max-width:480px">
+    <h1 class="section-title">Checkout verification unavailable</h1>
+    <div class="alert alert-warning">
+        @(ViewBag.Message ?? "Email verification isn't available right now — SMTP isn't configured for this store. Please contact us so we can complete your order another way.")
+    </div>
+    <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-secondary">Back to cart</a>
+</div>

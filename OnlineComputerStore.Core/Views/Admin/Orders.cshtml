@@ -1,0 +1,85 @@
+@model IEnumerable<Order>
+@{
+    ViewData["Title"] = "Admin — Orders";
+    var statuses = (string[])ViewBag.Statuses;
+    var statusFilter = (string?)ViewBag.StatusFilter;
+}
+<div class="container my-5">
+    <h2 class="section-title">Admin: Orders</h2>
+
+    <form method="get" class="d-flex align-items-center gap-2 mb-4">
+        <label class="form-label mb-0 small text-muted">Filter by status</label>
+        <select name="status" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
+            <option value="" selected="@(string.IsNullOrEmpty(statusFilter))">All</option>
+            @foreach (var s in statuses)
+            {
+                <option value="@s" selected="@(s == statusFilter)">@s</option>
+            }
+        </select>
+        <a asp-action="ExportOrdersCsv" asp-route-status="@statusFilter" class="btn btn-outline-secondary btn-sm ms-auto">⬇ Export CSV</a>
+    </form>
+
+    @if (!Model.Any())
+    {
+        <p class="text-muted">No orders found.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Customer</th>
+                        <th>Email</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Payment</th>
+                        <th>Fulfillment</th>
+                        <th>Placed</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var o in Model)
+                    {
+                        <tr>
+                            <td>#@o.Id</td>
+                            <td>@o.CustomerName</td>
+                            <td class="small text-muted">@o.Email</td>
+                            <td class="small text-muted">@string.Join(", ", o.Items.Select(i => $"{i.ProductName} x{i.Quantity}"))</td>
+                            <td class="fw-bold">@o.Total.ToMoney()</td>
+                            <td class="small">@o.PaymentProvider · @o.PaymentStatus</td>
+                            <td class="small">
+                                @if (o.FulfillmentMethod == "Pickup")
+                                {
+                                    <span class="badge text-bg-info">🏬 @o.PickupLocation</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">🚚 Ship</span>
+                                }
+                            </td>
+                            <td class="small text-muted">@o.CreatedAt.ToLocalTime().ToString("MMM d, yyyy")</td>
+                            <td>
+                                <span class="badge text-bg-secondary">@o.Status</span>
+                            </td>
+                            <td>
+                                <form asp-action="UpdateOrderStatus" asp-route-id="@o.Id" method="post" class="d-flex gap-1">
+                                    <select name="status" class="form-select form-select-sm">
+                                        @foreach (var s in statuses)
+                                        {
+                                            <option value="@s" selected="@(s == o.Status)">@s</option>
+                                        }
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-cta">Update</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

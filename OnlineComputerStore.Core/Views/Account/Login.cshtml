@@ -1,0 +1,32 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Login";
+}
+<div class="container my-5" style="max-width:420px">
+    <h1 class="section-title">Login</h1>
+    @if (TempData["PasswordReset"] != null)
+    {
+        <div class="alert alert-success">Your password has been reset. Please log in with your new password.</div>
+    }
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <form asp-action="Login" asp-route-returnUrl="@ViewBag.ReturnUrl" method="post" class="card p-4 shadow-sm">
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" autocomplete="username" />
+            <span asp-validation-for="Email" class="text-danger small"></span>
+        </div>
+        <div class="mb-2">
+            <label asp-for="Password" class="form-label"></label>
+            <input asp-for="Password" type="password" class="form-control" autocomplete="current-password" />
+            <span asp-validation-for="Password" class="text-danger small"></span>
+        </div>
+        <p class="text-end small mb-3"><a asp-action="ForgotPassword">Forgot your password?</a></p>
+        <button type="submit" class="btn btn-cta btn-lg w-100">Login</button>
+        <p class="text-center mt-3 mb-0 small">No account? <a asp-action="Register">Create one</a></p>
+    </form>
+</div>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

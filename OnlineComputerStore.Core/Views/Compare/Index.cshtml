@@ -1,0 +1,29 @@
+@model (Product a, Product b)
+@{
+    ViewData["Title"] = $"Compare {Model.a.Name} vs {Model.b.Name}";
+}
+<div class="container my-5">
+    <h1 class="section-title">Compare @Model.a.Name vs @Model.b.Name</h1>
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card p-3">
+                <img src="@Model.a.ImageUrl" class="img-fluid rounded mb-3" alt="@Model.a.Name" />
+                <h4>@Model.a.Name</h4>
+                <p class="text-muted">@Model.a.ShortSpecs</p>
+                <p class="fw-bold">@Model.a.Price.ToMoney()</p>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card p-3">
+                <img src="@Model.b.ImageUrl" class="img-fluid rounded mb-3" alt="@Model.b.Name" />
+                <h4>@Model.b.Name</h4>
+                <p class="text-muted">@Model.b.ShortSpecs</p>
+                <p class="fw-bold">@Model.b.Price.ToMoney()</p>
+            </div>
+        </div>
+    </div>
+    <div class="ai-panel">
+        <h6 class="text-teal text-uppercase small">AI Comparison</h6>
+        <p class="mb-0">@ViewBag.Summary</p>
+    </div>
+</div>

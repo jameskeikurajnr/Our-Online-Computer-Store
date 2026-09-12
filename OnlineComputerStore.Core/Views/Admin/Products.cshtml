@@ -1,0 +1,46 @@
+@model IEnumerable<Product>
+@{
+    ViewData["Title"] = "Admin — Products";
+}
+<div class="container my-5">
+    <h2 class="section-title">Admin: Products</h2>
+    <p class="text-muted">Use AI to generate a fresh description, and restock items here as they come back in.</p>
+    <table class="table align-middle">
+        <thead>
+            <tr><th>Name</th><th>Specs</th><th>Stock</th><th>Description</th><th></th></tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td>@p.Name</td>
+                    <td class="text-muted small">@p.ShortSpecs</td>
+                    <td style="min-width:160px">
+                        @if (p.StockQuantity <= 0)
+                        {
+                            <span class="badge text-bg-danger mb-1 d-block">Out of Stock</span>
+                        }
+                        else if (p.StockQuantity <= 5)
+                        {
+                            <span class="badge text-bg-warning mb-1 d-block">Low: @p.StockQuantity left</span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-success mb-1 d-block">@p.StockQuantity in stock</span>
+                        }
+                        <form asp-action="UpdateStock" asp-route-id="@p.Id" method="post" class="d-flex gap-1">
+                            <input type="number" name="quantity" value="@p.StockQuantity" min="0" class="form-control form-control-sm" style="max-width:80px" />
+                            <button type="submit" class="btn btn-sm btn-outline-primary">Update</button>
+                        </form>
+                    </td>
+                    <td class="small">@p.Description</td>
+                    <td>
+                        <form asp-action="GenerateDescription" asp-route-id="@p.Id" method="post">
+                            <button type="submit" class="btn btn-sm btn-cta">Generate AI Description</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

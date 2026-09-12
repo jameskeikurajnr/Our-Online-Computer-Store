@@ -1,0 +1,42 @@
+@model IEnumerable<AuditLogEntry>
+@{
+    ViewData["Title"] = "Admin — Audit Log";
+}
+<div class="container my-5">
+    <h1 class="section-title">Admin: Audit Log</h1>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <p class="text-muted mb-0">The most recent record first.</p>
+        @if (Model.Any())
+        {
+            <form asp-action="ClearAuditLog" method="post" onsubmit="return confirm('Clear the entire audit log? This can\'t be undone.');">
+                <button type="submit" class="btn btn-outline-danger btn-sm">Clear All</button>
+            </form>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <p class="text-muted">No admin actions logged yet.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr><th>When</th><th>Admin</th><th>Action</th><th>Details</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var e in Model)
+                    {
+                        <tr>
+                            <td class="small text-muted">@e.CreatedAt.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</td>
+                            <td>@e.AdminName</td>
+                            <td>@e.Action</td>
+                            <td class="small">@e.Details</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

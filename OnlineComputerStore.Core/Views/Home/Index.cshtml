@@ -1,0 +1,120 @@
+@model IEnumerable<Product>
+@{
+    ViewData["Title"] = "Home";
+    var recommended = ViewBag.Recommended as IEnumerable<Product> ?? Enumerable.Empty<Product>();
+}
+@if (TempData["AccountDeleted"] != null)
+{
+    <div class="container mt-3">
+        <div class="alert alert-success">Your account has been deleted. We're sorry to see you go.</div>
+    </div>
+}
+@if (TempData["BrowseHistoryCleared"] != null)
+{
+    <div class="container mt-3">
+        <div class="alert alert-success">Successfully cleared.</div>
+    </div>
+}
+
+<section class="hero">
+    <div class="hero-overlay"></div>
+    <div class="container position-relative">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <h1>Find the perfect computer for work, study, or heavy duty play.</h1>
+                <p class="lead">Smart recommendations powered by AI — tailored to your needs.</p>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a class="btn btn-cta btn-lg" asp-controller="Shop" asp-action="Index">Shop Laptops</a>
+                    <a class="btn btn-outline-light btn-lg" asp-controller="Shop" asp-action="Index">Explore Our Products</a>
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-block">
+                <div class="hero-card">
+                    <div class="hero-card-glow"></div>
+                    @if ((bool)(ViewBag.HasBrowseHistory ?? false))
+                    {
+                        <p class="mb-1 text-uppercase small text-teal">Because you've been browsing our store, we think you're a</p>
+                        <h3 class="mb-2">@ViewBag.Persona</h3>
+                        <p class="mb-0 small" style="opacity:.75">Based on pages you've viewed this session.</p>
+                        <form asp-controller="Home" asp-action="ClearBrowseHistory" method="post" class="mt-2">
+                            <button type="submit" class="btn btn-sm btn-outline-light">Clear my browsing history</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <p class="mb-1 text-uppercase small text-teal">New here?</p>
+                        <h3 class="mb-2">Explore a few products</h3>
+                        <p class="mb-0 small" style="opacity:.75">We'll tailor picks for you as you browse.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="container my-4">
+    <div class="assistant-teaser">
+        <div>
+            <h5 class="mb-1">Do You Need Help Choosing?</h5>
+            <p class="mb-0 text-muted">Ask Our Smart Assistant For Personalised Recommendations.</p>
+        </div>
+        <button type="button" class="btn btn-cta" onclick="document.getElementById('assistant-button').click()">Ask Our Assistant</button>
+    </div>
+</section>
+
+<section class="container my-5">
+    <h2 class="section-title">Trending This Week</h2>
+    <div class="row g-4">
+        @foreach (var p in Model)
+        {
+            <div class="col-md-4">
+                <div class="card product-card h-100">
+                    <span class="badge-ai">Great-Tech</span>
+                    <img src="@p.ImageUrl" class="card-img-top" alt="@p.Name" />
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">@p.Name</h5>
+                        <p class="card-text text-muted small">@p.ShortSpecs</p>
+                        <p class="card-text fw-bold fs-5 mt-auto">@p.Price.ToMoney()</p>
+                        <a asp-controller="Shop" asp-action="Details" asp-route-id="@p.Id" class="btn btn-primary w-100">View Details</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+<section class="container my-5">
+    <h2 class="section-title">All Recommended For You</h2>
+    <div class="row g-4">
+        @foreach (var p in recommended.Take(4))
+        {
+            <div class="col-md-3">
+                <div class="card product-card h-100">
+                    <img src="@p.ImageUrl" class="card-img-top" alt="@p.Name" />
+                    <div class="card-body">
+                        <h6 class="card-title">@p.Name</h6>
+                        <p class="card-text text-muted small mb-0">@p.ShortSpecs</p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+<section class="value-strip py-4">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-4"><span class="value-icon">⚡</span><p class="mb-0 fw-semibold">Fast Shipping Logistics</p></div>
+            <div class="col-md-4"><span class="value-icon">🛡️</span><p class="mb-0 fw-semibold">Secure Checkout Environment</p></div>
+            <div class="col-md-4"><span class="value-icon">🎧</span><p class="mb-0 fw-semibold">Expert Support At All-time</p></div>
+        </div>
+    </div>
+</section>
+
+<section class="showroom-section">
+    <div class="showroom-overlay"></div>
+    <div class="container position-relative text-center text-white py-5">
+        <h2>Also open in-store</h2>
+        <p class="lead mb-0">Please Come Try Before You Buy — Feel Free To visit our showroom.</p>
+    </div>
+</section>

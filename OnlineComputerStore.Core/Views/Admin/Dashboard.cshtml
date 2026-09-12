@@ -1,0 +1,73 @@
+@{
+    ViewData["Title"] = "Admin — Dashboard";
+    decimal totalRevenue = ViewBag.TotalRevenue;
+    int totalOrders = ViewBag.TotalOrders;
+    var ordersByStatus = (Dictionary<string, int>)ViewBag.OrdersByStatus;
+    var recentOrders = (List<Order>)ViewBag.RecentOrders;
+    var topProducts = ViewBag.TopProducts;
+}
+<div class="container my-5">
+    <h2 class="section-title">Admin: Dashboard</h2>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="summary-panel">
+                <p class="text-muted small mb-1 text-uppercase">Total Revenue</p>
+                <h2 class="fw-bold text-cta mb-0">@totalRevenue.ToMoney()</h2>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="summary-panel">
+                <p class="text-muted small mb-1 text-uppercase">Total Orders</p>
+                <h2 class="fw-bold mb-0">@totalOrders</h2>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="summary-panel">
+                <p class="text-muted small mb-2 text-uppercase">By Status</p>
+                @foreach (var kv in ordersByStatus)
+                {
+                    <span class="badge text-bg-secondary me-1">@kv.Key: @kv.Value</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <h5>Top Products</h5>
+            <table class="table table-sm align-middle">
+                <thead><tr><th>Product</th><th>Qty Sold</th><th>Revenue</th></tr></thead>
+                <tbody>
+                    @foreach (var p in topProducts)
+                    {
+                        <tr>
+                            <td>@p.Name</td>
+                            <td>@p.Quantity</td>
+                            <td>@(((decimal)p.Revenue).ToMoney())</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="col-md-6">
+            <h5>Recent Orders</h5>
+            <table class="table table-sm align-middle">
+                <thead><tr><th>#</th><th>Customer</th><th>Total</th><th>Status</th></tr></thead>
+                <tbody>
+                    @foreach (var o in recentOrders)
+                    {
+                        <tr>
+                            <td>#@o.Id</td>
+                            <td>@o.CustomerName</td>
+                            <td>@o.Total.ToMoney()</td>
+                            <td><span class="badge text-bg-secondary">@o.Status</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <a asp-action="Orders" class="btn btn-sm btn-outline-secondary">View all orders</a>
+            <a asp-action="ExportOrdersCsv" class="btn btn-sm btn-outline-secondary">⬇ Export CSV</a>
+        </div>
+    </div>
+</div>

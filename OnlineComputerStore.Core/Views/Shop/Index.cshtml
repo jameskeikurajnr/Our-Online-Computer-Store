@@ -1,0 +1,108 @@
+@model IEnumerable<Product>
+@{
+    ViewData["Title"] = "Shop";
+    var wishlistIds = (HashSet<int>)ViewBag.WishlistIds;
+    var sort = (string)ViewBag.Sort;
+    var page = (int)ViewBag.Page;
+    var totalPages = (int)ViewBag.TotalPages;
+    var trending = ViewBag.Trending as List<Product> ?? new List<Product>();
+}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <h1 class="section-title mb-0">Shop</h1>
+        <form method="get" class="d-flex align-items-center gap-2">
+            <label class="form-label mb-0 small text-muted">Sort by</label>
+            <select name="sort" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
+                <option value="name" selected="@(sort == "name")">Name (A–Z)</option>
+                <option value="price_asc" selected="@(sort == "price_asc")">Price: Low to High</option>
+                <option value="price_desc" selected="@(sort == "price_desc")">Price: High to Low</option>
+                <option value="brand" selected="@(sort == "brand")">Brand</option>
+            </select>
+        </form>
+    </div>
+
+    @if (trending.Any())
+    {
+        <div class="mb-5">
+            <h2 class="section-title fs-4">Trending This Week</h2>
+            <div class="row g-3 row-cols-1 row-cols-md-4">
+                @foreach (var p in trending)
+                {
+                    <div class="col">
+                        <div class="card product-card h-100">
+                            @if (User.Identity!.IsAuthenticated)
+                            {
+                                <form asp-controller="Wishlist" asp-action="Toggle" method="post" class="wishlist-toggle-form">
+                                    <input type="hidden" name="productId" value="@p.Id" />
+                                    <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                    <button type="submit" class="wishlist-heart-btn @(wishlistIds.Contains(p.Id) ? "active" : "")" title="@(wishlistIds.Contains(p.Id) ? "Remove from wishlist" : "Add to wishlist")">♥</button>
+                                </form>
+                            }
+                            <span class="badge-ai">Trending</span>
+                            <img src="@p.ImageUrl" class="card-img-top" alt="@p.Name" />
+                            <div class="card-body d-flex flex-column">
+                                <h6 class="card-title">@p.Name</h6>
+                                <p class="card-text fw-bold small mt-auto mb-2">@p.Price.ToMoney()</p>
+                                <a asp-action="Details" asp-route-id="@p.Id" class="btn btn-primary btn-sm w-100">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="row g-4">
+        @foreach (var p in Model)
+        {
+            <div class="col-md-3">
+                <div class="card product-card h-100">
+                    @if (User.Identity!.IsAuthenticated)
+                    {
+                        <form asp-controller="Wishlist" asp-action="Toggle" method="post" class="wishlist-toggle-form">
+                            <input type="hidden" name="productId" value="@p.Id" />
+                            <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                            <button type="submit" class="wishlist-heart-btn @(wishlistIds.Contains(p.Id) ? "active" : "")" title="@(wishlistIds.Contains(p.Id) ? "Remove from wishlist" : "Add to wishlist")">♥</button>
+                        </form>
+                    }
+                    <img src="@p.ImageUrl" class="card-img-top" alt="@p.Name" />
+                    <div class="card-body d-flex flex-column">
+                        <span class="badge text-bg-light mb-2 align-self-start">@p.Category</span>
+                        @if (p.StockQuantity <= 0)
+                        {
+                            <span class="badge text-bg-danger mb-2 align-self-start">Out of Stock</span>
+                        }
+                        else if (p.StockQuantity <= 5)
+                        {
+                            <span class="badge text-bg-warning mb-2 align-self-start">Only @p.StockQuantity left</span>
+                        }
+                        <h5 class="card-title">@p.Name</h5>
+                        <p class="card-text text-muted small">@p.ShortSpecs</p>
+                        <p class="card-text fw-bold mt-auto">@p.Price.ToMoney()</p>
+                        <a asp-action="Details" asp-route-id="@p.Id" class="btn btn-primary w-100">View Details</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (totalPages > 1)
+    {
+        <nav class="mt-5">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(page <= 1 ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-sort="@sort" asp-route-page="@(page - 1)">Previous</a>
+                </li>
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <li class="page-item @(i == page ? "active" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-sort="@sort" asp-route-page="@i">@i</a>
+                    </li>
+                }
+                <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-sort="@sort" asp-route-page="@(page + 1)">Next</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>

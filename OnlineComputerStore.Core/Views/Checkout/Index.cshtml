@@ -1,0 +1,65 @@
+@model CheckoutViewModel
+@{
+    ViewData["Title"] = "Checkout";
+}
+<div class="container my-5" style="max-width:600px">
+    <h1 class="section-title">Checkout</h1>
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <form asp-action="Index" method="post" class="card p-4 shadow-sm">
+        <div class="mb-3">
+            <label asp-for="CustomerName" class="form-label"></label>
+            <input asp-for="CustomerName" class="form-control" />
+            <span asp-validation-for="CustomerName" class="text-danger small"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" readonly />
+            <span class="form-text">Verified — this order will be placed under this email address.</span>
+            <span asp-validation-for="Email" class="text-danger small"></span>
+        </div>
+        <div class="mb-4">
+            <label class="form-label d-block">How would you like to receive your order?</label>
+            <div class="btn-group w-100" role="group">
+                <input type="radio" class="btn-check" name="FulfillmentMethod" id="fulfillShip" value="Ship" checked="@(Model.FulfillmentMethod != "Pickup")" onchange="toggleFulfillment()" />
+                <label class="btn btn-outline-secondary" for="fulfillShip">🚚 Ship to my address</label>
+                <input type="radio" class="btn-check" name="FulfillmentMethod" id="fulfillPickup" value="Pickup" checked="@(Model.FulfillmentMethod == "Pickup")" onchange="toggleFulfillment()" />
+                <label class="btn btn-outline-secondary" for="fulfillPickup">🏬 Click &amp; Collect</label>
+            </div>
+        </div>
+        <div class="mb-4" id="shipAddressGroup">
+            <label asp-for="Address" class="form-label"></label>
+            <textarea asp-for="Address" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="Address" class="text-danger small"></span>
+        </div>
+        <div class="mb-4 d-none" id="pickupLocationGroup">
+            <label asp-for="PickupLocation" class="form-label"></label>
+            <select asp-for="PickupLocation" class="form-select">
+                <option value="">Choose a store…</option>
+                <option value="Darling Harbour">Darling Harbour</option>
+                <option value="Parramatta">Parramatta</option>
+            </select>
+            <span asp-validation-for="PickupLocation" class="text-danger small"></span>
+            <p class="form-text mb-0">We'll email you as soon as it's ready — usually the same day.</p>
+        </div>
+        @if (ViewBag.PaymentEnabled == true)
+        {
+            <button type="submit" class="btn btn-cta btn-lg w-100">Continue to Payment</button>
+            <p class="text-muted small text-center mt-2 mb-0">You'll enter your card details on Stripe's secure payment page.</p>
+        }
+        else
+        {
+            <button type="submit" class="btn btn-cta btn-lg w-100">Place Order</button>
+        }
+    </form>
+</div>
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+        function toggleFulfillment() {
+            var pickup = document.getElementById('fulfillPickup').checked;
+            document.getElementById('shipAddressGroup').classList.toggle('d-none', pickup);
+            document.getElementById('pickupLocationGroup').classList.toggle('d-none', !pickup);
+        }
+        toggleFulfillment();
+    </script>
+}
