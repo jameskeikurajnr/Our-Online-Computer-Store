@@ -25,7 +25,7 @@ jobs:
       # Speeds up repeat runs by reusing the NuGet package cache, keyed off the
       # project files — a cache hit skips re-downloading every dependency.
       - name: Cache NuGet packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
