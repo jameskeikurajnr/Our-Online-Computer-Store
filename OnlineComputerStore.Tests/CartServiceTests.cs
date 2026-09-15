@@ -28,7 +28,11 @@ namespace OnlineComputerStore.Tests
                 Description = "desc",
                 Price = price,
                 ImageUrl = "/images/test.jpg",
-                Category = "Accessories"
+                Category = "Accessories",
+                // CartService.Add() refuses to add an out-of-stock item (StockQuantity <= 0),
+                // so a seeded test product needs real stock or every Add() call in these
+                // tests silently does nothing.
+                StockQuantity = 100
             };
             Context.Products.Add(product);
             Context.SaveChanges();
