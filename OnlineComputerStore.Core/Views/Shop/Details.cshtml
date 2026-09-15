@@ -7,6 +7,7 @@
     bool hasReviewed = ViewBag.HasReviewed;
     bool inWishlist = ViewBag.InWishlist;
     var frequentlyBought = (List<Product>)ViewBag.FrequentlyBoughtTogether;
+    var setupBundle = (List<Product>)ViewBag.SetupBundle;
 }
 <div class="container my-5">
     <div class="row g-5">
@@ -61,6 +62,32 @@
                 <h6 class="text-teal text-uppercase small mb-2">Recommended Accessories &amp; Upgrades (AI)</h6>
                 <p class="mb-0">@ViewBag.Upsell</p>
             </div>
+
+            @if (setupBundle != null && setupBundle.Any())
+            {
+                <div class="setup-bundle mt-4">
+                    <h6 class="text-uppercase small text-teal mb-1">✨ Complete Your Setup</h6>
+                    <p class="text-muted small mb-3">Pair your @Model.Name with the essentials — secure it, power it, back it up.</p>
+                    <form asp-controller="Cart" asp-action="AddMultiple" method="post">
+                        <input type="hidden" name="productIds" value="@Model.Id" />
+                        <div class="d-flex flex-column gap-2 mb-3">
+                            @foreach (var item in setupBundle)
+                            {
+                                <label class="setup-bundle-item d-flex align-items-center gap-3">
+                                    <input type="checkbox" name="productIds" value="@item.Id" checked class="form-check-input flex-shrink-0" />
+                                    <img src="@item.ImageUrl" alt="@item.Name" />
+                                    <span class="flex-grow-1">
+                                        <span class="d-block fw-semibold">@item.Name</span>
+                                        <span class="d-block text-muted small">@item.Category</span>
+                                    </span>
+                                    <span class="fw-bold">@item.Price.ToMoney()</span>
+                                </label>
+                            }
+                        </div>
+                        <button type="submit" class="btn btn-cta w-100">Add Selected to Cart</button>
+                    </form>
+                </div>
+            }
 
             @if (frequentlyBought != null && frequentlyBought.Any())
             {

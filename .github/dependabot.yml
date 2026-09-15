@@ -1,0 +1,17 @@
+version: 2
+updates:
+  # .NET/NuGet dependencies across both projects (EF Core, MailKit, Stripe's
+  # SDK, xUnit, etc.) — a weekly PR when a package has an update, security
+  # patches included.
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+
+  # The GitHub Actions themselves (actions/checkout, actions/setup-dotnet,
+  # actions/cache, CodeQL) — keeps the workflows on current, patched versions.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

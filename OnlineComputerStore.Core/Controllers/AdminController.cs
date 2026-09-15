@@ -121,6 +121,28 @@ namespace OnlineComputerStore.Core.Controllers
             return RedirectToAction("AuditLog");
         }
 
+        // Rolling retention clear: removes entries older than the given number of
+        // days, leaving recent activity in place.
+        [HttpPost]
+        public async Task<IActionResult> ClearAuditLogByDays(int days)
+        {
+            if (days > 0)
+                await _audit.ClearOlderThanAsync(days, CurrentAdminId, CurrentAdminName);
+
+            return RedirectToAction("AuditLog");
+        }
+
+        // Removes only the entries from one chosen calendar month, via an
+        // <input type="month"> value (format "yyyy-MM").
+        [HttpPost]
+        public async Task<IActionResult> ClearAuditLogByMonth(string month)
+        {
+            if (DateTime.TryParseExact(month, "yyyy-MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
+                await _audit.ClearByMonthAsync(parsed.Year, parsed.Month, CurrentAdminId, CurrentAdminName);
+
+            return RedirectToAction("AuditLog");
+        }
+
         // Downloads the (optionally status-filtered) order list as a CSV — for
         // pulling sales data into Excel/Sheets without touching the database directly.
         [HttpGet]

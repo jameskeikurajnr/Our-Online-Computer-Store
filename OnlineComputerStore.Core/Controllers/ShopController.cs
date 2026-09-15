@@ -14,6 +14,11 @@ namespace OnlineComputerStore.Core.Controllers
     {
         private const int PageSize = 8;
 
+        // Categories treated as "a device" for the Complete Your Setup bundle,
+        // and the essentials categories it pulls one pick from for each.
+        private static readonly string[] DeviceCategories = { "Laptops", "Desktops", "Tablets" };
+        private static readonly string[] SetupBundleCategories = { "MFA & Security Keys", "Cybersecurity", "Chargers", "USB Drives" };
+
         private readonly IProductService _products;
         private readonly IAiUpsellService _upsell;
         private readonly IWishlistService _wishlist;
@@ -50,11 +55,11 @@ namespace OnlineComputerStore.Core.Controllers
             ViewBag.TotalPages = totalPages;
             ViewBag.WishlistIds = await GetWishlistIdsAsync();
 
-            // Next 7 from the same trending ranking Home takes its top 2 from
-            // (skipping those 2), so this shelf never repeats what's on Home —
+            // Next 7 from the same trending ranking Home takes its top 3 from
+            // (skipping those 3), so this shelf never repeats what's on Home —
             // and only on page 1, so it doesn't reappear while paging through the grid.
             ViewBag.Trending = page == 1
-                ? (await _products.GetTrendingAsync()).Skip(2).Take(7).ToList()
+                ? (await _products.GetTrendingAsync()).Skip(3).Take(7).ToList()
                 : new List<Product>();
 
             return View(pageItems);
@@ -71,6 +76,28 @@ namespace OnlineComputerStore.Core.Controllers
             // Real co-purchase data from past orders, not AI-generated — a stronger
             // signal than the upsell text above once there's enough order history.
             ViewBag.FrequentlyBoughtTogether = await _orders.GetFrequentlyBoughtTogetherAsync(product.Id);
+
+            // "Complete Your Setup": a curated, one-click-add bundle shown only on
+            // devices (laptops/desktops/tablets) — one in-stock pick from each
+            // essentials category, so a new machine leaves the store secured,
+            // powered, and backed up. Distinct from the AI text upsell above: this
+            // is a real form that adds every ticked item straight to the cart.
+            if (DeviceCategories.Contains(product.Category))
+            {
+                var all = await _products.GetAllAsync();
+                ViewBag.SetupBundle = SetupBundleCategories
+                    .Select(cat => all
+                        .Where(p => p.Category == cat && p.StockQuantity > 0)
+                        .OrderByDescending(p => p.IsFeatured)
+                        .ThenBy(p => p.Price)
+                        .FirstOrDefault())
+                    .Where(p => p != null)
+                    .ToList();
+            }
+            else
+            {
+                ViewBag.SetupBundle = new List<Product>();
+            }
 
             var wishlistIds = await GetWishlistIdsAsync();
             ViewBag.InWishlist = wishlistIds.Contains(product.Id);

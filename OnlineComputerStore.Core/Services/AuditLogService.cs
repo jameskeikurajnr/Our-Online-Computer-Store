@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -39,6 +40,31 @@ namespace OnlineComputerStore.Core.Services
             // that the log was wiped and by whom — an audit log that can erase its
             // own history without a trace would defeat the point of having one.
             await LogAsync(adminUserId, adminName, "Cleared audit log", "All previous entries were removed.");
+        }
+
+        public async Task ClearOlderThanAsync(int days, int adminUserId, string adminName)
+        {
+            var cutoff = DateTime.UtcNow.AddDays(-Math.Abs(days));
+
+            var toRemove = _context.AuditLogEntries.Where(e => e.CreatedAt < cutoff);
+            _context.AuditLogEntries.RemoveRange(toRemove);
+            await _context.SaveChangesAsync();
+
+            await LogAsync(adminUserId, adminName, "Cleared audit log entries by age",
+                $"Removed entries older than {days} day(s) (before {cutoff:d MMM yyyy}).");
+        }
+
+        public async Task ClearByMonthAsync(int year, int month, int adminUserId, string adminName)
+        {
+            var start = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+            var end = start.AddMonths(1);
+
+            var toRemove = _context.AuditLogEntries.Where(e => e.CreatedAt >= start && e.CreatedAt < end);
+            _context.AuditLogEntries.RemoveRange(toRemove);
+            await _context.SaveChangesAsync();
+
+            await LogAsync(adminUserId, adminName, "Cleared audit log entries by month",
+                $"Removed entries from {start:MMMM yyyy}.");
         }
     }
 }

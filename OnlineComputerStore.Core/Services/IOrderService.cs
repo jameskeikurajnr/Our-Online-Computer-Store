@@ -22,6 +22,11 @@ namespace OnlineComputerStore.Core.Services
         // Admin: full order list (newest first) for the Orders/Dashboard views.
         Task<List<Order>> GetAllAsync();
 
+        // A signed-in customer's own order history, matched by the email on the
+        // order (orders aren't tied to an account id) — used for the account
+        // page's Personal Security Score widget.
+        Task<List<Order>> GetByEmailAsync(string email);
+
         Task<bool> UpdateStatusAsync(int id, string status);
 
         // "Customers who bought this also bought": other products that show up most

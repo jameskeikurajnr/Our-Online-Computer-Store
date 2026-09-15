@@ -29,9 +29,9 @@ namespace OnlineComputerStore.Core.Controllers
             ViewBag.Persona = await _aiHomepage.GetPersonaAsync(string.IsNullOrWhiteSpace(history) ? "no browsing history yet" : history);
             ViewBag.Recommended = all;
 
-            // Top 2 trending products. Shop shows the next 5 from this same
-            // ranking (skipping these 2), so the two pages never show the same item.
-            var trending = (await _products.GetTrendingAsync()).Take(2).ToList();
+            // Top 3 trending products. Shop shows the next 7 from this same
+            // ranking (skipping these 3), so the two pages never show the same item.
+            var trending = (await _products.GetTrendingAsync()).Take(3).ToList();
             return View(trending);
         }
 

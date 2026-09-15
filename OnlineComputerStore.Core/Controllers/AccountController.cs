@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
@@ -24,14 +25,23 @@ namespace OnlineComputerStore.Core.Controllers
             "image/jpeg", "image/png", "image/gif", "image/webp"
         };
 
+        // Categories that count toward the Personal Security Score on the account
+        // page — owning at least one product from each raises the score.
+        private static readonly string[] MfaCategory = { "MFA & Security Keys" };
+        private static readonly string[] CyberCategory = { "Cybersecurity" };
+
         private readonly IUserService _users;
         private readonly ICartService _cart;
         private readonly IEmailService _email;
-        public AccountController(IUserService users, ICartService cart, IEmailService email)
+        private readonly IOrderService _orders;
+        private readonly IProductService _products;
+        public AccountController(IUserService users, ICartService cart, IEmailService email, IOrderService orders, IProductService products)
         {
             _users = users;
             _cart = cart;
             _email = email;
+            _orders = orders;
+            _products = products;
         }
 
         [HttpGet]
@@ -88,6 +98,7 @@ namespace OnlineComputerStore.Core.Controllers
         public IActionResult ForgotPassword() => View(new ForgotPasswordViewModel());
 
         [HttpPost]
+        [EnableRateLimiting("forgot-password")]
         public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
         {
             if (!ModelState.IsValid) return View(model);
@@ -150,7 +161,31 @@ namespace OnlineComputerStore.Core.Controllers
 
         [HttpGet]
         [Authorize]
-        public IActionResult ManageAccount() => View();
+        public async Task<IActionResult> ManageAccount()
+        {
+            var email = User.FindFirstValue(ClaimTypes.Email);
+            var orders = await _orders.GetByEmailAsync(email ?? "");
+            var purchasedProductIds = orders.SelectMany(o => o.Items).Select(i => i.ProductId).ToHashSet();
+
+            var ownedCategories = new HashSet<string>();
+            if (purchasedProductIds.Count > 0)
+            {
+                var allProducts = await _products.GetAllAsync();
+                ownedCategories = allProducts
+                    .Where(p => purchasedProductIds.Contains(p.Id))
+                    .Select(p => p.Category)
+                    .ToHashSet();
+            }
+
+            var hasMfa = ownedCategories.Overlaps(MfaCategory);
+            var hasCyber = ownedCategories.Overlaps(CyberCategory);
+
+            ViewBag.HasMfaKey = hasMfa;
+            ViewBag.HasCyberAccessory = hasCyber;
+            ViewBag.SecurityScore = (hasMfa ? 50 : 0) + (hasCyber ? 50 : 0);
+
+            return View();
+        }
 
         [HttpGet]
         [Authorize]
@@ -257,7 +292,7 @@ namespace OnlineComputerStore.Core.Controllers
 
             if (user == null)
             {
-                ModelState.AddModelError("", "That password wasn't correct � your account has not been deleted.");
+                ModelState.AddModelError("", "That password wasn't correct — your account has not been deleted.");
                 return View(model);
             }
 

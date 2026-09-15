@@ -1,0 +1,47 @@
+name: CodeQL
+
+# Scans on every push/PR to main, plus a weekly run on its own — so a
+# vulnerability pattern introduced without a fresh commit (e.g. in a
+# dependency) still gets caught.
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: "23 4 * * 1" # Mondays, 04:23 UTC — an arbitrary off-peak time
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write # required to upload results to the repo's Security tab
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: csharp
+
+      # Builds the solution so CodeQL can trace through the compiled code
+      # rather than just pattern-matching source text.
+      - name: Build
+        run: |
+          dotnet restore OnlineComputerStore.sln
+          dotnet build OnlineComputerStore.sln --no-restore --configuration Release
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:csharp"

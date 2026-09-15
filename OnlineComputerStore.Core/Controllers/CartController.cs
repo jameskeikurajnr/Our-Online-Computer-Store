@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using OnlineComputerStore.Core.Services;
 
@@ -12,6 +13,19 @@ namespace OnlineComputerStore.Core.Controllers
         public IActionResult Add(int productId, int quantity = 1)
         {
             _cart.Add(productId, quantity);
+            return RedirectToAction("Index");
+        }
+
+        // Adds every checked item from a bundle in one go — used by the "Complete
+        // Your Setup" panel on the product details page, where the main product
+        // plus any ticked accessories are submitted together as one form.
+        [HttpPost]
+        public IActionResult AddMultiple(int[] productIds)
+        {
+            foreach (var id in productIds.Distinct())
+            {
+                _cart.Add(id, 1);
+            }
             return RedirectToAction("Index");
         }
 

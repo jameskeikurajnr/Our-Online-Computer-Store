@@ -37,11 +37,11 @@ namespace OnlineComputerStore.Core.Services
                 return (false, "Rating must be between 1 and 5.");
 
             if (string.IsNullOrWhiteSpace(comment))
-                return (false, "Please write a short comment with your review.");
+                return (false, "Please write a short comment with your review. Thank you");
 
             // One review per customer per product — matched by the unique DB index too.
             if (await HasReviewedAsync(productId, userId))
-                return (false, "You've already reviewed this product.");
+                return (false, "You've already reviewed this product. God Bless you");
 
             _context.ProductReviews.Add(new ProductReview
             {

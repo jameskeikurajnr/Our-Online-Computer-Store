@@ -1,0 +1,42 @@
+name: Build & Test
+
+# Runs on every push and pull request that touches main, plus any PR into it —
+# so a broken commit gets flagged before it's merged.
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch: # lets you trigger a run manually from the Actions tab
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      # Speeds up repeat runs by reusing the NuGet package cache, keyed off the
+      # project files — a cache hit skips re-downloading every dependency.
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore OnlineComputerStore.sln
+
+      - name: Build
+        run: dotnet build OnlineComputerStore.sln --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test OnlineComputerStore.sln --no-build --configuration Release --verbosity normal

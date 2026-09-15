@@ -97,6 +97,17 @@ namespace OnlineComputerStore.Core.Services
         public async Task<List<Order>> GetAllAsync() =>
             await _context.Orders.Include(o => o.Items).OrderByDescending(o => o.CreatedAt).ToListAsync();
 
+        public async Task<List<Order>> GetByEmailAsync(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return new List<Order>();
+
+            return await _context.Orders
+                .Include(o => o.Items)
+                .Where(o => o.Email.ToLower() == email.Trim().ToLower())
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync();
+        }
+
         public async Task<bool> UpdateStatusAsync(int id, string status)
         {
             var order = await _context.Orders.FindAsync(id);

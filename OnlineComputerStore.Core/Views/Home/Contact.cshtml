@@ -5,15 +5,14 @@
 
 <div class="container my-5">
     <h3 class="section-title">Contact Us</h3>
-    <p class="text-muted mb-4">For any questions, or Anything else — Send us a message and we'll gladly get back to you the soonest.</p>
+    <p class="text-muted mb-4">Any enquiry?.. We'll gladly get back to you the soonest.</p>
 
     <div class="row g-5">
         <div class="col-lg-7">
             @if (TempData["ContactSuccess"] != null)
             {
                 <div class="alert alert-success">
-                    Thanks — Your message has been sent. We'll be in touch. 
-                    God Bless you!
+                    Thank you, We'll be in touch. God Bless you!
                 </div>
             }
             @if (TempData["ContactError"] != null)
@@ -47,12 +46,11 @@
                     <span class="text-danger small" asp-validation-for="Message"></span>
                 </div>
 
-                <button type="submit" class="btn btn-cta">Send Message</button>
+                <button type="submit" class="btn btn-cta">Send</button>
             </form>
 
             <p class="text-muted small mt-3 mb-0">
-                We'll reply to the email address you provide above — within one - three business days. 
-                God Bless you!
+                We'll reply to your email within one - three business days. God Bless you!
             </p>
         </div>
 

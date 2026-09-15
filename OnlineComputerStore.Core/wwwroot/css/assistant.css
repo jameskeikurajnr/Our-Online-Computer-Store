@@ -10,20 +10,32 @@
 }
 #assistant-panel {
   position: absolute; bottom: 70px; right: 0; width: 320px; max-height: 440px;
-  background: #fff; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  background: var(--card-bg); color: var(--text-primary);
+  border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.25);
   display: none; flex-direction: column; overflow: hidden;
+  transition: background-color .2s ease, color .2s ease;
 }
 #assistant-panel.open { display: flex; }
 .assistant-header {
+  /* Deliberately fixed, not theme-tokened — matches the site header's own
+     navy regardless of light/dark mode, so this always has its own
+     explicit white text rather than ever depending on inherited color. */
   background: #14213d; color: #fff; padding: .75rem 1rem; display: flex; justify-content: space-between; align-items: center;
 }
 .assistant-header button { background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer; }
 #assistant-messages { flex: 1; overflow-y: auto; padding: .75rem; max-height: 280px; }
 .msg { margin: 6px 0; padding: 8px 12px; border-radius: 10px; max-width: 85%; font-size: .9rem; }
-.msg.user { background: #e0f7ff; margin-left: auto; text-align: right; }
-.msg.ai { background: #f0f2f5; }
-.assistant-input-row { display: flex; border-top: 1px solid #eee; }
-.assistant-input-row input { flex: 1; border: none; padding: .6rem; }
+/* Both bubbles set their own text color explicitly — previously .msg had
+   none, so it fell back to inheriting body's theme-driven color, which
+   turned near-white in dark mode against these always-light bubbles. */
+.msg.user { background: rgba(20,184,166,.18); color: var(--text-primary); margin-left: auto; text-align: right; }
+.msg.ai { background: var(--track-bg); color: var(--text-primary); }
+.assistant-input-row { display: flex; border-top: 1px solid var(--card-border); }
+.assistant-input-row input {
+  flex: 1; border: none; padding: .6rem;
+  background: transparent; color: var(--text-primary);
+}
+.assistant-input-row input::placeholder { color: var(--text-muted); }
 .assistant-input-row input:focus { outline: none; }
 .assistant-input-row button {
   border: none; background: #14b8a6; color: #04221d; padding: 0 1rem; font-weight: 600; cursor: pointer;

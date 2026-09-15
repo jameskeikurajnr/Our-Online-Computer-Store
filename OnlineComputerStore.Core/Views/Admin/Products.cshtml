@@ -4,7 +4,7 @@
 }
 <div class="container my-5">
     <h2 class="section-title">Admin: Products</h2>
-    <p class="text-muted">Use AI to generate a fresh description, and restock items here as they come back in.</p>
+    <p class="text-muted">Useing AI to generate description, restock items as they come.</p>
     <table class="table align-middle">
         <thead>
             <tr><th>Name</th><th>Specs</th><th>Stock</th><th>Description</th><th></th></tr>
@@ -36,7 +36,7 @@
                     <td class="small">@p.Description</td>
                     <td>
                         <form asp-action="GenerateDescription" asp-route-id="@p.Id" method="post">
-                            <button type="submit" class="btn btn-sm btn-cta">Generate AI Description</button>
+                            <button type="submit" class="btn btn-sm btn-cta">AI Description</button>
                         </form>
                     </td>
                 </tr>

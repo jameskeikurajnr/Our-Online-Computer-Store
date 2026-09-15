@@ -2,11 +2,14 @@
     ViewData["Title"] = "About Us";
 }
 
-<section class="hero" style="min-height: 260px;">
+<section class="hero d-flex align-items-center justify-content-center text-center" style="min-height: 260px;">
     <div class="hero-overlay"></div>
     <div class="container position-relative text-white py-5">
-        <h1 class="mb-2">About Online Computer Store</h1>
-        <p class="lead mb-0">Our Straight-forward advice, Honest Prices, and Genuiner Computers That Actually Fit How You Use Them.</p>
+        <h1 class="mb-3 fw-bold">About Online Computer Store</h1>
+        <p class="lead mb-0">
+            Straightforward advice, honest prices, and genuine computers
+            that actually fit the way you use them.
+        </p>
     </div>
 </section>
 
@@ -15,17 +18,18 @@
         <div class="col-lg-7">
             <h2 class="section-title">Our story</h2>
             <p>
-                Our Online Computer Store started as a single shopfront with one simple idea: buying a computer
-                shouldn't feel like a guessing game. Since then we've grown into an online store carrying
-                laptops, desktops, monitors, and accessories from brands people actually trust while
-                keeping the same person-to-person approach we started with.
+                Our Online Computer Store began as a single shopfront built on one simple belief: buying a
+                computer shouldn't feel like guesswork. What started as a small, person&#8209;to&#8209;person
+                operation has grown into a full online store offering laptops, desktops, monitors, and
+                accessories from brands people genuinely trust, all while keeping the same human approach
+                we began with.
             </p>
             <p>
-                Every product on our shelves is one our team has used, tested, or would genuinely recommend
-                to a friend. We've also built the site to actually work the way a good store should: AI-assisted
-                search and comparison tools to help you find the right fit without wading through spec sheets,
-                real order tracking with a dedicated number for every purchase, and a real person checking every
-                message that comes through our Contact page, not just a form that disappears into nowhere.
+                Every product we stock is something our team has used, tested, or would confidently recommend
+                to a friend. And we've built the site to behave the way a good store should: AI&#8209;assisted
+                search and comparison tools that help you find the right fit without drowning in spec sheets,
+                real order tracking with a dedicated number for every purchase, and a real person reading
+                every message sent through our Contact page, not a form that disappears into nowhere.
             </p>
             <p class="text-muted small mb-0">
 
@@ -54,9 +58,10 @@
         </div>
     </div>
 
-    <div class="ai-panel text-center">
-        <h6 class="text-teal text-uppercase small">Want to know more?</h6>
-        <p class="mb-3">Reach out any time — We'd genuinely like to hear from you.</p>
-        <a asp-controller="Home" asp-action="Contact" class="btn btn-cta">Please Get in touch</a>
-    </div>
+</div>
+
+<div class="ai-panel-flush text-center">
+    <h6 class="text-teal text-uppercase small">Curious to know more?</h6>
+    <p class="mb-3">Reach out any time. We'd genuinely like to hear from you.</p>
+    <a asp-controller="Home" asp-action="Contact" class="btn btn-cta">Get in touch</a>
 </div>

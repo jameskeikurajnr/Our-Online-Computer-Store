@@ -4,7 +4,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Online Computer Store</title>
+    <script>
+        // Applied before the stylesheets load so there's no flash of the wrong
+        // theme on page load. Respects a saved choice first, then falls back to
+        // the OS-level preference if the person hasn't picked one on this site yet.
+        (function () {
+            try {
+                var saved = localStorage.getItem('theme');
+                var wantsDark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (wantsDark) document.documentElement.setAttribute('data-theme', 'dark');
+            } catch (e) { }
+        })();
+    </script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/assistant.css" asp-append-version="true" />
 </head>
@@ -42,10 +55,16 @@
                         }
                     </ul>
                     <form class="d-flex ai-search" asp-controller="Search" asp-action="Index" method="get" role="search">
-                        <input class="form-control" type="search" name="q" placeholder="Search products or ask a question" autocomplete="off" />
-                        <button class="btn btn-cta" type="submit">Search</button>
+                        <input class="form-control" type="search" name="q" placeholder="Your T-Wishlist" autocomplete="off" />
+                        <button class="btn btn-cta" type="submit" aria-label="Search" title="Search">🔍</button>
                     </form>
                     <ul class="navbar-nav ms-3 mb-2 mb-lg-0 align-items-lg-center">
+                        <li class="nav-item">
+                            <button type="button" id="themeToggle" class="btn nav-link theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle dark mode">
+                                <span class="theme-icon-light" aria-hidden="true">☀️</span>
+                                <span class="theme-icon-dark" aria-hidden="true">🌙</span>
+                            </button>
+                        </li>
                         @if (User.Identity != null && User.Identity.IsAuthenticated)
                         {
                             <li class="nav-item">
@@ -74,11 +93,21 @@
                                     @await Component.InvokeAsync("UserAvatar", new { size = 26 })
                                     @User.Identity.Name
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="ManageAccount">Account</a></li>
+                                <ul class="dropdown-menu dropdown-menu-end user-menu-dropdown" aria-labelledby="userMenu">
+                                    <li class="px-3 py-2 d-flex align-items-center gap-2">
+                                        @await Component.InvokeAsync("UserAvatar", new { size = 44 })
+                                        <div class="text-truncate">
+                                            <div class="fw-semibold text-truncate">@User.Identity.Name</div>
+                                            <div class="small text-muted text-truncate">@User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value</div>
+                                        </div>
+                                    </li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="ManageAccount">Manage my account&hellip;</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="EditProfile">Preferences</a></li>
+                                    <li><hr class="dropdown-divider" /></li>
                                     <li>
                                         <form asp-controller="Account" asp-action="Logout" method="post">
-                                            <button type="submit" class="dropdown-item">Logout</button>
+                                            <button type="submit" class="dropdown-item">Sign out</button>
                                         </form>
                                     </li>
                                 </ul>
@@ -99,19 +128,23 @@
     </main>
     <footer class="site-footer">
         <div class="container py-4">
-            <div class="row">
-                <div class="col-md-4">
-                    <h4>Your Online Computer Store</h4>
-                    <p class="text-muted">Our Modern, AI-Enhanced Computer Store Built Happily on ASP.NET Core.</p>
+            <div class="d-flex flex-column flex-md-row justify-content-md-center footer-cols-gap text-center text-md-start">
+                <div>
+                    <h4 class="text-nowrap">Your Online Computer Store</h4>
+                    <p class="text-muted text-nowrap">
+                        Modern AI‑Enhanced Store Built on ASP.NET Core.
+                    </p>
                 </div>
-                <div class="col-md-4">
+                <div>
                     <h4>Shop</h4>
                     <ul class="list-unstyled">
                         <li><a asp-controller="Shop" asp-action="Index">All Products</a></li>
                         <li><a asp-controller="Orders" asp-action="Track">Track an Order</a></li>
+                        <li><a asp-controller="Cart" asp-action="Index">My Cart</a></li>
+                        <li><a asp-controller="Wishlist" asp-action="Index">Wishlist</a></li>
                     </ul>
                 </div>
-                <div class="col-md-4">
+                <div>
                     <h4>Company</h4>
                     <ul class="list-unstyled">
                         <li><a asp-controller="Home" asp-action="About">About Us</a></li>
@@ -133,7 +166,7 @@
                 </div>
             </div>
             <hr class="border-secondary" />
-            <p class="text-muted small mb-0">&copy; @DateTime.Now.Year Online Computer Store — Powered by Jamesisky10 and The Boys!</p>
+            <p class="text-muted small mb-0 text-center">&copy; @DateTime.Now.Year Online Computer Store, Happily Powered and Mastered by The Good Boys!</p>
         </div>
     </footer>
     @await Html.PartialAsync("_AssistantWidget")

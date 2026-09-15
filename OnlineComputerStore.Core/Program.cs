@@ -68,11 +68,24 @@ builder.Services.AddRateLimiter(options =>
             Window = TimeSpan.FromMinutes(5),
             QueueLimit = 0
         }));
+
+    // Tighter than login: each request here actually sends an email through
+    // our own SMTP account, and the endpoint could otherwise be used to
+    // spam an inbox or probe which addresses have accounts registered.
+    options.AddPolicy("forgot-password", httpContext => RateLimitPartition.GetFixedWindowLimiter(
+        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        factory: _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 3,
+            Window = TimeSpan.FromMinutes(10),
+            QueueLimit = 0
+        }));
+
     options.OnRejected = async (context, token) =>
     {
         context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
         context.HttpContext.Response.ContentType = "text/plain";
-        await context.HttpContext.Response.WriteAsync("Too many login attempts. Please wait a few minutes and try again.", token);
+        await context.HttpContext.Response.WriteAsync("Too many attempts. Please wait a few minutes and try again.", token);
     };
 });
 

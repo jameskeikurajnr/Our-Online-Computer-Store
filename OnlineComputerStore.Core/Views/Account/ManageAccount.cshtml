@@ -29,6 +29,39 @@
         </div>
     </div>
 
+    @{
+        bool hasMfaKey = ViewBag.HasMfaKey;
+        bool hasCyberAccessory = ViewBag.HasCyberAccessory;
+        int securityScore = ViewBag.SecurityScore;
+    }
+    <div class="card p-4 shadow-sm mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">🛡️ Your Personal Security Score</h5>
+            <span class="fw-bold fs-4 text-teal">@securityScore%</span>
+        </div>
+        <div class="security-score-bar mb-3">
+            <div class="security-score-fill" style="width:@(securityScore)%"></div>
+        </div>
+        <ul class="list-unstyled mb-0">
+            <li class="d-flex align-items-center gap-2 mb-2">
+                <span aria-hidden="true">@(hasMfaKey ? "✅" : "⬜")</span>
+                <span class="flex-grow-1">Hardware MFA / security key</span>
+                @if (!hasMfaKey)
+                {
+                    <a asp-controller="Shop" asp-action="Index" class="btn btn-sm btn-outline-secondary">Shop</a>
+                }
+            </li>
+            <li class="d-flex align-items-center gap-2">
+                <span aria-hidden="true">@(hasCyberAccessory ? "✅" : "⬜")</span>
+                <span class="flex-grow-1">Encrypted storage or privacy accessory</span>
+                @if (!hasCyberAccessory)
+                {
+                    <a asp-controller="Shop" asp-action="Index" class="btn btn-sm btn-outline-secondary">Shop</a>
+                }
+            </li>
+        </ul>
+    </div>
+
     <div class="card p-4 shadow-sm mt-4 border-danger">
         <h5 class="text-danger">Danger zone</h5>
         <p class="text-muted small">Deleting your account is permanent and can't be undone.</p>

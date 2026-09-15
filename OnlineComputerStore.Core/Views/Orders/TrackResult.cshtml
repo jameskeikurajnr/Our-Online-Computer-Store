@@ -7,14 +7,16 @@
 <div class="container my-5" style="max-width:600px">
     <h1 class="section-title">Order #@order.Id</h1>
     <p class="text-muted">Placed @order.CreatedAt.ToString("d MMM yyyy")</p>
-    <p class="mb-4">
+    <p class="mb-4 d-flex align-items-center gap-2">
         @if (order.FulfillmentMethod == "Pickup")
         {
-            <text>🏬 Click &amp; Collect at <strong>@order.PickupLocation</strong></text>
+            <span aria-hidden="true">🏬</span>
+            <span>Click &amp; Collect at <strong>@order.PickupLocation</strong></span>
         }
         else
         {
-            <text>🚚 Shipping to: @order.Address</text>
+            <span aria-hidden="true">🚚</span>
+            <span>Shipping to: @order.Address</span>
         }
     </p>
 

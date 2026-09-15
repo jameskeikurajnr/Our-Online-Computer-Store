@@ -44,3 +44,26 @@
         if (e.key === 'Escape' && !overlay.hidden) closeLightbox();
     });
 })();
+
+// Dark mode toggle. The initial theme is already applied by the inline
+// script in _Layout.cshtml (before first paint) — this just wires up the
+// button to flip it and remember the choice for next visit.
+(function () {
+    var btn = document.getElementById('themeToggle');
+    if (!btn) return;
+
+    btn.addEventListener('click', function () {
+        var root = document.documentElement;
+        var isDark = root.getAttribute('data-theme') === 'dark';
+
+        if (isDark) {
+            root.removeAttribute('data-theme');
+        } else {
+            root.setAttribute('data-theme', 'dark');
+        }
+
+        try {
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        } catch (e) { }
+    });
+})();

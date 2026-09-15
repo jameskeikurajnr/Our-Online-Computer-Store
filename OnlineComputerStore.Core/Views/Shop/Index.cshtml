@@ -24,7 +24,7 @@
     @if (trending.Any())
     {
         <div class="mb-5">
-            <h2 class="section-title fs-4">Trending This Week</h2>
+            <h2 class="section-title fs-4">This Week Trends</h2>
             <div class="row g-3 row-cols-1 row-cols-md-4">
                 @foreach (var p in trending)
                 {
@@ -35,7 +35,7 @@
                                 <form asp-controller="Wishlist" asp-action="Toggle" method="post" class="wishlist-toggle-form">
                                     <input type="hidden" name="productId" value="@p.Id" />
                                     <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
-                                    <button type="submit" class="wishlist-heart-btn @(wishlistIds.Contains(p.Id) ? "active" : "")" title="@(wishlistIds.Contains(p.Id) ? "Remove from wishlist" : "Add to wishlist")">♥</button>
+                                    <button type="submit" class="wishlist-heart-btn @(wishlistIds.Contains(p.Id) ? "active" : "")" title="@(wishlistIds.Contains(p.Id) ? "Remove" : "Add")">♥</button>
                                 </form>
                             }
                             <span class="badge-ai">Trending</span>

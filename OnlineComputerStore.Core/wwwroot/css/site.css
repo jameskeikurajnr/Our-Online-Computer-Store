@@ -6,13 +6,83 @@
   --brand-cta-dark: #ea580c;
   --surface: #f7f8fb;
   --card-radius: 16px;
+
+  /* ---- Theme-able tokens (redefined below under [data-theme="dark"]) ---- */
+  --text-primary: #1c1c1e;
+  --text-muted: #6c757d;
+  --card-bg: #ffffff;
+  --card-border: rgba(0,0,0,.08);
+  --input-bg: #ffffff;
+  --input-border: #ced4da;
+  --track-bg: #e9ecef;
+  --ai-panel-bg: #eefaf8;
+  --ai-panel-border: #cdeee8;
 }
+
+/* Dark palette: applied when a person picks dark mode, or (with no explicit
+   choice saved yet) when their OS is already set to dark — see the inline
+   script in _Layout.cshtml that stamps data-theme before first paint. */
+[data-theme="dark"] {
+  --surface: #0f1524;
+  --text-primary: #e7eaf0;
+  --text-muted: #9aa3b5;
+  --card-bg: #171f30;
+  --card-border: rgba(255,255,255,.1);
+  --input-bg: #1c2438;
+  --input-border: #2c3650;
+  --track-bg: #2c3650;
+  --ai-panel-bg: rgba(20,184,166,.1);
+  --ai-panel-border: rgba(20,184,166,.3);
+}
+
+html { background: var(--surface); }
 
 body {
   font-family: "Segoe UI", Inter, Roboto, system-ui, sans-serif;
   background: var(--surface);
-  color: #1c1c1e;
+  color: var(--text-primary);
+  transition: background-color .2s ease, color .2s ease;
 }
+
+/* ---- Dark-mode-aware Bootstrap components ---- */
+.card {
+  background-color: var(--card-bg); color: var(--text-primary); border-color: var(--card-border);
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+}
+.text-muted { color: var(--text-muted) !important; }
+.form-control, .form-select {
+  background-color: var(--input-bg); border-color: var(--input-border); color: var(--text-primary);
+}
+.form-control:focus, .form-select:focus { background-color: var(--input-bg); color: var(--text-primary); }
+.dropdown-menu { background-color: var(--card-bg); }
+.dropdown-item { color: var(--text-primary); }
+[data-theme="dark"] .dropdown-item:hover, [data-theme="dark"] .dropdown-item:focus { background-color: rgba(255,255,255,.08); color: #fff; }
+.table { color: var(--text-primary); }
+.table > :not(caption) > * > * { background-color: var(--card-bg); color: var(--text-primary); border-bottom-color: var(--card-border); }
+[data-theme="dark"] .page-link { background-color: var(--card-bg); border-color: var(--card-border); color: var(--text-primary); }
+[data-theme="dark"] .badge.text-bg-light { background-color: rgba(255,255,255,.12) !important; color: var(--text-primary) !important; }
+
+/* Bootstrap here is v5.1, which predates the .text-bg-* utility classes
+   (added in 5.3) that every badge in this project is written to use —
+   without these, a badge got no background at all, just Bootstrap's base
+   .badge white text sitting on nothing: invisible on a light background,
+   only "working" by accident against dark ones. This backfills the same
+   classes 5.3 ships, so every badge renders identically in both themes. */
+.text-bg-primary { color: #fff !important; background-color: var(--bs-primary) !important; }
+.text-bg-secondary { color: #fff !important; background-color: var(--bs-secondary) !important; }
+.text-bg-success { color: #fff !important; background-color: var(--bs-success) !important; }
+.text-bg-danger { color: #fff !important; background-color: var(--bs-danger) !important; }
+.text-bg-warning { color: #000 !important; background-color: var(--bs-warning) !important; }
+.text-bg-info { color: #000 !important; background-color: var(--bs-info) !important; }
+.text-bg-light { color: #000 !important; background-color: var(--bs-light) !important; }
+.text-bg-dark { color: #fff !important; background-color: var(--bs-dark) !important; }
+.review-item { border-bottom-color: var(--card-border) !important; }
+
+/* ---- Theme toggle ---- */
+.theme-toggle-btn { font-size: 1.05rem; padding: .4rem .6rem; line-height: 1; }
+.theme-icon-dark { display: none; }
+[data-theme="dark"] .theme-icon-light { display: none; }
+[data-theme="dark"] .theme-icon-dark { display: inline; }
 
 /* ---- Header ---- */
 .site-header {
@@ -58,6 +128,9 @@ body {
 .ai-search .btn-cta { border-radius: 0 999px 999px 0; flex: 0 0 auto; }
 .dropdown-menu { border-radius: 10px; border: none; box-shadow: 0 8px 24px rgba(0,0,0,.15); }
 .dropdown-item:active { background: var(--brand-teal); }
+.dropdown-divider { border-color: var(--card-border); }
+.user-menu-dropdown { min-width: 240px; }
+.user-menu-dropdown .text-truncate { max-width: 170px; }
 
 /* ---- Buttons ---- */
 .btn-cta {
@@ -97,10 +170,24 @@ body {
 
 /* ---- Assistant teaser ---- */
 .assistant-teaser {
-  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-  background: #fff; border-radius: var(--card-radius); padding: 1.25rem 1.5rem;
-  box-shadow: 0 4px 16px rgba(0,0,0,.06);
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .5rem; text-align: center;
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-dark) 100%);
+  border-radius: var(--card-radius); padding: 2rem;
+  box-shadow: 0 10px 30px rgba(20,33,61,.25);
+  overflow: hidden; color: #fff;
 }
+.assistant-teaser-glow {
+  position: absolute; inset: -50% 0 auto 0; margin: 0 auto; width: 260px; height: 220px;
+  background: var(--brand-teal); filter: blur(70px); opacity: .4; pointer-events: none;
+}
+.assistant-teaser-icon {
+  font-size: 2rem; position: relative; z-index: 1;
+}
+.assistant-teaser-text { position: relative; z-index: 1; max-width: 560px; }
+.assistant-teaser-text h4 { font-weight: 700; }
+.assistant-teaser-text p { opacity: .85; margin-bottom: 0; }
 
 /* ---- Section headings ---- */
 .section-title { font-weight: 700; margin-bottom: 1.5rem; }
@@ -121,18 +208,45 @@ body {
 
 /* ---- AI panels ---- */
 .ai-panel {
-  background: #eefaf8; border: 1px solid #cdeee8; border-radius: 12px; padding: 1rem 1.25rem;
+  background: var(--ai-panel-bg); border: 1px solid var(--ai-panel-border); border-radius: 12px; padding: 1rem 1.25rem;
+  color: var(--text-primary);
+}
+
+/* Full-bleed variant: same content, but edge-to-edge with just a top rule
+   instead of a boxed card — for when the panel sits directly above the
+   footer (e.g. the About page) rather than inside a content block. */
+.ai-panel-flush {
+  border-top: 1px solid var(--ai-panel-border); border-radius: 0; padding: 2.5rem 1.25rem;
+  color: var(--text-primary);
 }
 
 /* ---- Value strip ---- */
-.value-strip { background: #fff; }
+.value-strip { background: var(--card-bg); }
 .value-icon { font-size: 1.8rem; display: block; margin-bottom: .25rem; }
 
 /* ---- Summary panel (cart) ---- */
 .summary-panel {
-  background: #fff; border-radius: var(--card-radius); padding: 1.5rem;
-  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+  background: var(--card-bg); border-radius: var(--card-radius); padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,.06); color: var(--text-primary);
 }
+
+/* ---- Complete Your Setup bundle ---- */
+.setup-bundle {
+  background: linear-gradient(135deg, rgba(20,184,166,.08), rgba(20,184,166,.02));
+  border: 1px solid rgba(20,184,166,.25);
+  border-radius: var(--card-radius);
+  padding: 1.25rem 1.5rem;
+}
+.setup-bundle-item {
+  background: var(--card-bg); border-radius: 10px; padding: .6rem .75rem;
+  cursor: pointer; transition: box-shadow .15s ease; margin-bottom: 0;
+}
+.setup-bundle-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.setup-bundle-item img { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
+
+/* ---- Personal Security Score ---- */
+.security-score-bar { height: 10px; border-radius: 999px; background: var(--track-bg); overflow: hidden; }
+.security-score-fill { height: 100%; background: linear-gradient(90deg, var(--brand-teal), var(--brand-cta)); border-radius: 999px; transition: width .4s ease; }
 
 /* ---- Order tracking timeline ---- */
 .order-timeline { display: flex; justify-content: space-between; }
@@ -173,6 +287,10 @@ body {
 /* ---- Pagination ---- */
 .pagination .page-link { color: var(--brand-primary); }
 .pagination .page-item.active .page-link { background: var(--brand-cta); border-color: var(--brand-cta); color: #fff; }
+/* Overrides the rule above specifically in dark mode — .pagination .page-link's
+   navy text would otherwise sit on the dark .page-link background from
+   higher up this file with barely any contrast. */
+[data-theme="dark"] .pagination .page-link:not(.active) { color: var(--text-primary); }
 
 /* ---- Profile photo click-to-enlarge overlay ---- */
 .avatar-lightbox {
@@ -198,6 +316,12 @@ body {
   display: flex; align-items: center; justify-content: center;
 }
 .avatar-lightbox-close:hover { background: rgba(255,255,255,.22); }
+
+/* ---- Footer column spacing ---- */
+.footer-cols-gap { gap: 1.5rem; }
+@media (min-width: 768px) {
+  .footer-cols-gap { gap: 5rem; }
+}
 
 /* ---- Footer ---- */
 .site-footer {

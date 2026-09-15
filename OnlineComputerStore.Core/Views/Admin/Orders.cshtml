@@ -63,11 +63,11 @@
                             </td>
                             <td class="small text-muted">@o.CreatedAt.ToLocalTime().ToString("MMM d, yyyy")</td>
                             <td>
-                                <span class="badge text-bg-secondary">@o.Status</span>
+                                <span class="badge text-bg-secondary">@o.Status.ToStatusEmoji() @o.Status</span>
                             </td>
                             <td>
                                 <form asp-action="UpdateOrderStatus" asp-route-id="@o.Id" method="post" class="d-flex gap-1">
-                                    <select name="status" class="form-select form-select-sm">
+                                    <select name="status" class="form-select form-select-sm" style="width:42px; flex:0 0 auto; padding-left:.4rem; text-indent:-9999px;" title="Change status" aria-label="Change status">
                                         @foreach (var s in statuses)
                                         {
                                             <option value="@s" selected="@(s == o.Status)">@s</option>
