@@ -54,6 +54,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddScoped<IProductRequestService, ProductRequestService>();
 
 // Login attempts are limited per client IP: 5 tries per 5-minute window, so a
 // brute-force guesser gets throttled without punishing everyone sharing the

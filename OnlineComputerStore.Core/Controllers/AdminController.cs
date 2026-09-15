@@ -23,13 +23,15 @@ namespace OnlineComputerStore.Core.Controllers
         private readonly IAiContentService _ai;
         private readonly IOrderService _orders;
         private readonly IAuditLogService _audit;
+        private readonly IProductRequestService _productRequests;
 
-        public AdminController(StoreDbContext db, IAiContentService ai, IOrderService orders, IAuditLogService audit)
+        public AdminController(StoreDbContext db, IAiContentService ai, IOrderService orders, IAuditLogService audit, IProductRequestService productRequests)
         {
             _db = db;
             _ai = ai;
             _orders = orders;
             _audit = audit;
+            _productRequests = productRequests;
         }
 
         public IActionResult Products() => View(_db.Products.OrderBy(p => p.Name).ToList());
@@ -111,6 +113,28 @@ namespace OnlineComputerStore.Core.Controllers
         }
 
         public async Task<IActionResult> AuditLog() => View(await _audit.GetRecentAsync());
+
+        // Customer searches that matched nothing in the catalog — items an admin
+        // should consider sourcing and adding to the store.
+        public async Task<IActionResult> ProductRequests() => View(await _productRequests.GetActiveAsync());
+
+        [HttpPost]
+        public async Task<IActionResult> ResolveProductRequest(int id)
+        {
+            if (await _productRequests.MarkResolvedAsync(id))
+                await _audit.LogAsync(CurrentAdminId, CurrentAdminName, "Resolved product request", $"Request #{id}");
+
+            return RedirectToAction("ProductRequests");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ClearProductRequests()
+        {
+            var count = await _productRequests.ClearAllAsync();
+            await _audit.LogAsync(CurrentAdminId, CurrentAdminName, "Cleared product requests", $"Removed {count} request(s).");
+
+            return RedirectToAction("ProductRequests");
+        }
 
         // Wipes the audit log so it doesn't just grow forever — leaves one fresh
         // entry behind recording that it was cleared, and by whom.

@@ -33,7 +33,7 @@ namespace OnlineComputerStore.Core.Services
         public async Task<(bool Success, string Message)> SendContactMessageAsync(string fromName, string fromEmail, string subject, string body)
         {
             if (!IsConfigured)
-                return (false, "Email isn't configured yet — add your SMTP details in appsettings.json (see the \"Smtp\" section).");
+                return (false, "Email isn't configured yet — Add your SMTP in appsettings.json (see the \"Smtp\" section).");
 
             try
             {
@@ -81,7 +81,7 @@ namespace OnlineComputerStore.Core.Services
                 var body = new StringBuilder();
                 body.AppendLine($"Hi {order.CustomerName},");
                 body.AppendLine();
-                body.AppendLine($"Thanks for your order! Your order number is #{order.Id} — keep this number so you can track your order any time using the \"Track Order\" page on our site. God Bless you!");
+                body.AppendLine($"Thanks for your order! Your order number is #{order.Id} — keep this number for tracking your order \"Track Order\" page on our site. God Bless you!");
                 body.AppendLine();
                 body.AppendLine("Order summary:");
                 foreach (var item in order.Items)
@@ -196,7 +196,7 @@ namespace OnlineComputerStore.Core.Services
                 body.AppendLine();
                 body.AppendLine(resetUrl);
                 body.AppendLine();
-                body.AppendLine("This link expires in 1 hour. If you didn't request this, you can safely ignore this email — your password won't be changed.");
+                body.AppendLine("This link expires in 1 hour. If you didn't request this, you can ignore this email.");
 
                 message.Body = new TextPart("plain") { Text = body.ToString() };
 
@@ -230,7 +230,7 @@ namespace OnlineComputerStore.Core.Services
                 var body = new StringBuilder();
                 body.AppendLine($"Your checkout verification code is: {code}");
                 body.AppendLine();
-                body.AppendLine("This code expires in 10 minutes. If you didn't try to check out, you can safely ignore this email.");
+                body.AppendLine("This code expires in 10 minutes.");
 
                 message.Body = new TextPart("plain") { Text = body.ToString() };
 
@@ -245,7 +245,7 @@ namespace OnlineComputerStore.Core.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to send checkout verification code to {Email}.", toEmail);
-                return (false, "We couldn't send the verification code just now. Please try again in a moment.");
+                return (false, "We couldn't send the verification code just now. Please try again later.");
             }
         }
 
@@ -286,6 +286,39 @@ namespace OnlineComputerStore.Core.Services
             {
                 _logger.LogError(ex, "Failed to send low-stock alert email.");
                 // Deliberately not rethrown — a failed alert shouldn't break checkout.
+            }
+        }
+
+        public async Task SendProductRequestAlertAsync(string searchTerm, int timesSearched)
+        {
+            if (!IsConfigured || string.IsNullOrWhiteSpace(searchTerm)) return;
+
+            try
+            {
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress(_options.FromName, _options.FromAddress));
+                message.To.Add(MailboxAddress.Parse(_options.ToAddress));
+                message.Subject = $"Product request (searched {timesSearched}x): {searchTerm}";
+
+                var body = new StringBuilder();
+                body.AppendLine($"A product we don't currently carry has now been searched {timesSearched} times:");
+                body.AppendLine();
+                body.AppendLine($"  \"{searchTerm}\"");
+                body.AppendLine();
+                body.AppendLine("Repeat interest worth sourcing. Consider buying it and listing it. See Admin > Product Not on Website for the full list of unmatched searches.");
+
+                message.Body = new TextPart("plain") { Text = body.ToString() };
+
+                using var client = new SmtpClient();
+                await client.ConnectAsync(_options.Host, _options.Port, SecureSocketOptions.StartTls);
+                await client.AuthenticateAsync(_options.Username, _options.Password);
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send product request alert email for \"{SearchTerm}\".", searchTerm);
+                // Deliberately not rethrown — a failed alert shouldn't break search.
             }
         }
     }

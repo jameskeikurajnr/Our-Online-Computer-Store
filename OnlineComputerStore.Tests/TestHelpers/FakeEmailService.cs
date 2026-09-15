@@ -27,5 +27,15 @@ namespace OnlineComputerStore.Tests.TestHelpers
             LastLowStockAlert = products;
             return Task.CompletedTask;
         }
+
+        public string? LastProductRequestAlert { get; private set; }
+        public int LastProductRequestAlertCount { get; private set; }
+
+        public Task SendProductRequestAlertAsync(string searchTerm, int timesSearched)
+        {
+            LastProductRequestAlert = searchTerm;
+            LastProductRequestAlertCount = timesSearched;
+            return Task.CompletedTask;
+        }
     }
 }

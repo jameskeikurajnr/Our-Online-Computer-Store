@@ -16,6 +16,7 @@ namespace OnlineComputerStore.Core.Data
         public DbSet<WishlistItem> WishlistItems => Set<WishlistItem>();
         public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
         public DbSet<AuditLogEntry> AuditLogEntries => Set<AuditLogEntry>();
+        public DbSet<ProductRequest> ProductRequests => Set<ProductRequest>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
