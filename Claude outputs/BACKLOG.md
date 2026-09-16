@@ -31,6 +31,14 @@ Everything left before final submission, roughly in priority order. Pulled from 
   responsive/cross-browser pass so far has been static/code-level review only (plus the
   Playwright-rendered mockup screenshots from this sprint, which cover the *redesigned* pages
   but not the rest of the site) (WBS 6.5 note)
+- **New:** `PageViewMiddleware`'s `ShouldCount` logic (skips admin-dashboard views, API calls,
+  and static-file-looking paths; only counts GET + 200 responses) and its swallowed-exception
+  behavior on save failure are untested — worth a couple of unit tests given it writes to the
+  database on every real page load.
+- **New:** Confirm the `PageViews` table has actually been created on the live database (via
+  `dotnet ef database update` or however this project applies migrations) and that Admin >
+  Dashboard is rendering real traffic numbers now that the middleware is committed, not just
+  compiling successfully.
 
 ## Medium priority — catalog
 
@@ -56,6 +64,11 @@ Everything left before final submission, roughly in priority order. Pulled from 
   through the same mockup-and-approval visual pass — worth a look if there's time, though
   none of them are known to be broken, just visually unreviewed against the newer pages'
   styling.
+- **New:** Commit more frequently going forward. Several sprints' worth of work (Phase 10–14)
+  had accumulated uncommitted before a single catch-up commit on Sept 16, and a half-committed
+  feature (PageView tracking) briefly left the pushed repo in a non-compiling state until it
+  was caught — see `SPRINT.md`. Smaller, more frequent commits make this kind of gap much
+  easier to spot early.
 
 ## Explicitly out of scope (documented decisions, not backlog items)
 

@@ -79,6 +79,34 @@ own accent color and a plain-text brand label (no logos) so the grid reads as di
 listings rather than six copies of the same box. Real photography is now a backlog item — see
 `BACKLOG.md`.
 
+## Post-sprint: committing accumulated work & a near-miss broken build
+
+**Date:** Sept 16, 2026
+
+When it came time to actually commit this sprint's work, `git status` showed far more than
+Phase 14 — several earlier sprints (Phase 10–13: wishlist, account/admin redesign, the "Not on
+Website" audit-log feature, AI assistant refinements) had also never been committed. All of it
+was reconciled and pushed in one commit (`2a1b6ed`), alongside the root-level `README.md`/
+`README-1.md`/`DOCUMENTATION.md`, which had been superseded by their `Claude outputs/`
+equivalents and were removed as part of the same commit.
+
+That same `git status` also turned up an untracked page-view tracking feature — a `PageView`
+model, an `AddPageViews` EF Core migration, and a `PageViewMiddleware` that logs one row (path
++ timestamp, nothing identifying) per real page request, feeding the admin dashboard's
+"Traffic" line with real numbers instead of the hardcoded sample data it used to show. Its
+origin wasn't immediately clear, so it was deliberately left out of the first catch-up commit
+pending confirmation.
+
+That turned out to matter: `Program.cs` and `StoreDbContext.cs` — both already committed in
+that same push — directly reference `PageViewMiddleware` and `PageView`. Leaving those two
+files out meant the pushed repo would fail to compile on a fresh clone: exactly the kind of
+thing that would surface badly during a graded submission or live demo. Once the dependency was
+traced, the feature was committed on its own as legitimate, finished work rather than stray
+scaffolding.
+
+**Takeaway:** commit more often. A gap this size made it hard to tell what belonged to which
+sprint, and let a build-breaking half-commit slip through what looked like a routine catch-up.
+
 ## Next sprint candidates
 
 See `BACKLOG.md`.
