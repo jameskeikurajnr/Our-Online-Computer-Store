@@ -107,6 +107,18 @@ scaffolding.
 **Takeaway:** commit more often. A gap this size made it hard to tell what belonged to which
 sprint, and let a build-breaking half-commit slip through what looked like a routine catch-up.
 
+**A second near-miss, same cause:** the root-level `README.md` deleted in that same catch-up
+commit turned out not to be a duplicate of this file at all — it was the actual "how to open,
+configure, and run this project" guide (Visual Studio setup, `appsettings.json` for the
+database/AI/SMTP/Stripe, folder structure, testing, known simplifications), assumed redundant
+without reading its content first. It briefly left GitHub's repo page with no README at all.
+Recovered from git history (`git show 3668b91:README.md`, the commit before the deletion),
+restored to the repo root with its stale parts brought current (catalog count, product-image
+provenance, the "not yet a Git repository" setup section replaced with pointers to this
+`Claude outputs/` folder), and committed separately. **Lesson repeated:** read what a file
+actually contains before deleting or superseding it, even when its name and location suggest
+it's an obvious duplicate.
+
 ## Next sprint candidates
 
 See `BACKLOG.md`.

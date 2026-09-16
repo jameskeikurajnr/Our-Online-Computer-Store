@@ -48,10 +48,13 @@ laptops added this sprint — see `BACKLOG.md` for the full list.
 
 ## Repository
 
-The codebase itself carries its own `README.md` (setup in Visual Studio, `appsettings.json`
-configuration, running tests, folder structure) and `DOCUMENTATION.md` (architecture, data
-model, security model, and — new this sprint — §11 on the Phase 14 storefront work). This doc
-is the ClickUp-side project overview, not a replacement for either.
+The repo root carries its own `README.md` — setup in Visual Studio, `appsettings.json`
+configuration, running tests, folder structure. It was briefly deleted during the Sept 16
+git catch-up (mistaken for a duplicate of this file) and restored once the mistake was caught
+— see this doc's "Post-sprint" section below. `DOCUMENTATION.md` (architecture, data model,
+security model, and — new this sprint — §11 on the Phase 14 storefront work, §12 on PageView
+tracking) lives here in `Claude outputs/` alongside this file. This doc is the ClickUp-side
+project overview, not a replacement for either.
 
 ## Importing the WBS into ClickUp
 
