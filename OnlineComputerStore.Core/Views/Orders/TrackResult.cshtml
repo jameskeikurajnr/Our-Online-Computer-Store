@@ -4,36 +4,166 @@
     var steps = new[] { "Processing", "Shipped", "Delivered" };
     var currentIndex = System.Array.IndexOf(steps, order.Status);
 }
-<div class="container my-5" style="max-width:600px">
-    <h1 class="section-title">Order #@order.Id</h1>
-    <p class="text-muted">Placed @order.CreatedAt.ToString("d MMM yyyy")</p>
-    <p class="mb-4 d-flex align-items-center gap-2">
-        @if (order.FulfillmentMethod == "Pickup")
-        {
-            <span aria-hidden="true">🏬</span>
-            <span>Click &amp; Collect at <strong>@order.PickupLocation</strong></span>
-        }
-        else
-        {
-            <span aria-hidden="true">🚚</span>
-            <span>Shipping to: @order.Address</span>
-        }
-    </p>
+<style>
+    /* Scoped to this page. .order-timeline/.timeline-step exist globally in
+       site.css but are only ever used here, so this new .track-timeline
+       replaces them on this page without touching anything else. */
 
-    <div class="order-timeline mb-4">
-        @for (var i = 0; i < steps.Length; i++)
-        {
-            <div class="timeline-step @(i <= currentIndex ? "active" : "")">
-                <span class="dot"></span>
-                <span>@steps[i]</span>
+    .result-wrap { max-width: 620px; margin: 0 auto; }
+    .result-head { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 6px; }
+    .result-head h1 { font-size: 26px; font-weight: 700; margin: 0; color: var(--text-primary); }
+    .result-placed { color: var(--text-muted); font-size: 13.5px; margin: 0 0 18px; }
+
+    .result-card {
+        background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--card-radius);
+        box-shadow: 0 20px 45px -28px rgba(20,33,61,.35), 0 2px 10px rgba(20,33,61,.06);
+        padding: 30px; margin-bottom: 20px;
+    }
+
+    .fulfillment-row {
+        display: flex; align-items: center; gap: 12px;
+        background: var(--ai-panel-bg); border: 1px solid var(--ai-panel-border); border-radius: 12px;
+        padding: 12px 16px; margin-bottom: 28px; font-size: 14px; color: var(--text-primary);
+    }
+    .fulfillment-ico {
+        width: 36px; height: 36px; flex: none; background: var(--card-bg);
+        border: 1px solid var(--ai-panel-border); border-radius: 10px; color: var(--brand-teal);
+        display: flex; align-items: center; justify-content: center;
+    }
+
+    .track-timeline { display: flex; align-items: flex-start; margin-bottom: 8px; }
+    .track-step { flex: 1; text-align: center; position: relative; }
+    .track-step-line {
+        position: absolute; top: 19px; left: -50%; width: 100%; height: 2px;
+        background: var(--card-border); z-index: 0;
+    }
+    .track-step:first-child .track-step-line { display: none; }
+    .track-step.done .track-step-line, .track-step.active .track-step-line { background: var(--brand-teal); }
+    .track-step-dot {
+        position: relative; z-index: 1; width: 38px; height: 38px; margin: 0 auto 10px;
+        border-radius: 50%; background: var(--track-bg); border: 2px solid var(--card-border);
+        color: var(--text-muted);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .track-step.done .track-step-dot { background: var(--brand-teal); border-color: var(--brand-teal); color: #04221d; }
+    .track-step.active .track-step-dot { background: var(--card-bg); border-color: var(--brand-teal); color: var(--brand-teal); box-shadow: 0 0 0 4px rgba(20,184,166,.15); }
+    .track-step-label { font-size: 12.5px; font-weight: 600; color: var(--text-muted); }
+    .track-step.done .track-step-label, .track-step.active .track-step-label { color: var(--text-primary); }
+
+    .result-summary { border-top: 1px solid var(--card-border); margin-top: 28px; padding-top: 20px; }
+    .result-summary h6 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); margin: 0 0 14px; }
+    .order-item-row { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; color: var(--text-primary); padding: 8px 0; border-bottom: 1px dashed var(--card-border); }
+    .order-item-row:last-of-type { border-bottom: none; }
+    .order-item-name { font-weight: 600; }
+    .order-item-qty { color: var(--text-muted); font-size: 12.5px; font-weight: 400; }
+    .order-item-price { font-weight: 600; white-space: nowrap; }
+    .order-total-row { display: flex; justify-content: space-between; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--card-border); font-size: 15.5px; font-weight: 700; color: var(--text-primary); }
+
+    .ai-explain-panel {
+        background: var(--ai-panel-bg); border: 1px solid var(--ai-panel-border); border-radius: 12px;
+        padding: 16px 18px; color: var(--text-primary); display: flex; gap: 12px; align-items: flex-start;
+        margin-bottom: 24px;
+    }
+    .ai-explain-ico {
+        width: 30px; height: 30px; flex: none; background: var(--card-bg);
+        border: 1px solid var(--ai-panel-border); border-radius: 8px; color: var(--brand-teal);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .ai-explain-panel h6 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--brand-teal); margin: 0 0 4px; }
+    .ai-explain-panel p { margin: 0; font-size: 13.5px; line-height: 1.5; }
+
+    .btn-track-outline {
+        display: inline-flex; align-items: center; gap: 8px;
+        border: 1.5px solid var(--input-border); background: transparent; color: var(--text-primary);
+        padding: 10px 20px; border-radius: 10px; font-weight: 600; font-size: 14px; text-decoration: none;
+    }
+    .btn-track-outline:hover { border-color: var(--brand-teal); color: var(--brand-teal); }
+
+    @@media (max-width: 560px) {
+        .result-card { padding: 22px; }
+        .track-step-label { font-size: 11px; }
+    }
+</style>
+
+<div class="container my-5">
+    <div class="result-wrap">
+        <div class="result-head">
+            <h1>Order #@order.Id</h1>
+        </div>
+        <p class="result-placed">Placed @order.CreatedAt.ToString("d MMM yyyy")</p>
+
+        <div class="result-card">
+            <div class="fulfillment-row">
+                @if (order.FulfillmentMethod == "Pickup")
+                {
+                    <span class="fulfillment-ico">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1-5h16l1 5" /><path d="M4 9v11h16V9" /><path d="M9 20v-6h6v6" /></svg>
+                    </span>
+                    <span>Click &amp; Collect at <strong>@order.PickupLocation</strong></span>
+                }
+                else
+                {
+                    <span class="fulfillment-ico">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" /><polygon points="16 8 20 8 23 11 23 16 16 16 16 8" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>
+                    </span>
+                    <span>Shipping to: <strong>@order.Address</strong></span>
+                }
             </div>
-        }
-    </div>
 
-    <div class="ai-panel">
-        <h6 class="text-teal text-uppercase small">AI Explanation</h6>
-        <p class="mb-0">@ViewBag.Explanation</p>
-    </div>
+            <div class="track-timeline">
+                @for (var i = 0; i < steps.Length; i++)
+                {
+                    var stepClass = i < currentIndex ? "done" : (i == currentIndex ? "active" : "");
+                    <div class="track-step @stepClass">
+                        <span class="track-step-line"></span>
+                        <span class="track-step-dot">
+                            @if (steps[i] == "Processing")
+                            {
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+                            }
+                            else if (steps[i] == "Shipped")
+                            {
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" /><polygon points="16 8 20 8 23 11 23 16 16 16 16 8" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>
+                            }
+                            else
+                            {
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+                            }
+                        </span>
+                        <span class="track-step-label">@steps[i]</span>
+                    </div>
+                }
+            </div>
 
-    <a asp-action="Track" class="btn btn-outline-primary mt-4">Track Another</a>
+            <div class="result-summary">
+                <h6>Order Summary</h6>
+                @foreach (var item in order.Items)
+                {
+                    <div class="order-item-row">
+                        <span class="order-item-name">@item.ProductName <span class="order-item-qty">&times;@item.Quantity</span></span>
+                        <span class="order-item-price">@((item.UnitPrice * item.Quantity).ToMoney())</span>
+                    </div>
+                }
+                <div class="order-total-row">
+                    <span>Total</span>
+                    <span>@order.Total.ToMoney()</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="ai-explain-panel">
+            <span class="ai-explain-ico">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z" /><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" /></svg>
+            </span>
+            <div>
+                <h6>AI Explanation</h6>
+                <p class="mb-0">@ViewBag.Explanation</p>
+            </div>
+        </div>
+
+        <a asp-action="Track" class="btn-track-outline">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></svg>
+            Track Another Order
+        </a>
+    </div>
 </div>

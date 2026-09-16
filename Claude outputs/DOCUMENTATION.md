@@ -55,7 +55,7 @@ code.
 
 | Entity | Key fields | Notes |
 |---|---|---|
-| `Product` | Name, Brand, Price, Category, ImageUrl, IsFeatured, StockQuantity | Seeded by `DbInitializer`; 15 catalog items |
+| `Product` | Name, Brand, Price, Category, ImageUrl, IsFeatured, StockQuantity | Seeded by `DbInitializer`; 33 catalog items as of Phase 14 (12 of them Laptops) |
 | `AppUser` | Email (unique), PasswordHash/Salt, IsAdmin, ProfilePhotoUrl | Cookie auth principal source; `ProfilePhotoUrl` is a `data:` URL, not a file path (see §6) |
 | `Order` | Email, CustomerName, Address, Total, Status, PaymentProvider, PaymentStatus, PaymentReference, FulfillmentMethod, PickupLocation | `PaymentReference` stores the Stripe session ID for idempotency; `FulfillmentMethod` is `"Ship"` or `"Pickup"` |
 | `OrderItem` | OrderId (FK), ProductId, ProductName, UnitPrice, Quantity | One-to-many with `Order`, cascade delete |
@@ -330,3 +330,61 @@ at the root of that folder, spelling out exactly what's fake in it and recommend
 out of the Git repository pushed for this project (or, if kept for history, pushed only to a
 clearly separate, clearly labeled archive repo) — so nobody, including a future reader of this
 report, mistakes it for working functionality.
+
+## 11. Storefront UX modernization (WBS Phase 14)
+
+A visual-design pass across the pages that hadn't been touched since the original build,
+plus a real fix for a UX gap and a catalog expansion. Full task-by-task detail is in
+`clickup_import_wbs.csv` (WBS 14.1–14.9); this section covers the parts worth understanding
+as implementation, not just as a changelog entry.
+
+### Shop category filtering
+`ShopController.Index` gained an optional `category` query parameter, matched
+case-insensitively against `Product.Category`. The filter is applied before sorting and
+paging, and threaded through every link that needs to preserve it: the sort form (a hidden
+`category` input), and all three pagination links (`Previous`/page-numbers/`Next`, via
+`asp-route-category`). When a category filter is active, the "Trending" shelf re-ranks within
+just that category instead of mixing in items the page is intentionally hiding. This is what
+Home's "Shop Laptops" button now links to (`asp-route-category="Laptops"`) — previously it and
+"Explore Our Products" were functionally identical.
+
+### Track Order: Order Summary
+`Order.Items` (the order's line items) and `Order.Total` existed on the model but weren't
+rendered anywhere on the customer-facing order-tracking result page. `TrackResult.cshtml` now
+shows an itemized summary (product name, quantity, line total) and the order total, using data
+the app already had — not a new query or migration, just a previously-unused part of the
+existing `Order` object finally reaching the view.
+
+### Placeholder-image system for unphotographed products
+Products without real photography (currently the 6 laptops added this sprint) get
+`ImageUrl` pointed at a locally-generated placeholder JPEG rather than a blank string — a
+blank `ImageUrl` would break the `<img>` tag on every customer-facing page that lacks the
+Admin page's fallback-icon logic, whereas a placeholder image is a normal, always-loadable
+asset that requires zero template changes anywhere in the codebase. Each placeholder is
+brand-colored (an accent bar/icon tint plus a plain-text brand name — no logos, so there's no
+trademark reproduction) rather than one shared generic graphic, so a product grid with several
+unphotographed items still reads as distinct listings. Swapping in a real photo later is a
+one-line `ImageUrl` change in `DbInitializer.cs` (plus, for products already seeded into a
+live database, a direct `UPDATE` — see the next paragraph — since the seeder is additive-only
+and won't retroactively touch existing rows).
+
+### `DbInitializer` is additive-only — know this before editing seed data
+`DbInitializer.Initialize()` runs on every startup, dedupes by `Product.Name`, and
+`AddRange`s only the names missing from the database. This is safe and restart-proof for
+*adding* new products, but it means **editing an existing seed entry's fields (price, image,
+description, etc.) has no effect on a database that already has that row** — the row already
+exists, so it's never re-added, and the seeder never issues an `UPDATE`. Phase 14's placeholder
+-image fix needed both: `DbInitializer.cs` updated (correct for any future/fresh database) and
+a direct SQL `UPDATE` against the live `onlinecomputerstore.db` for the 6 rows that already
+existed. Anyone changing seed data for products that might already be seeded elsewhere should
+check the live database, not just the seed file.
+
+### Design pattern used for this pass
+Every page in this phase went through the same sequence: build a static HTML mockup reusing
+the site's real CSS custom properties (`--brand-teal`, `--card-bg`, `--text-primary`, etc. —
+never hand-picked colors) → render light/dark/mobile screenshots with Playwright → get
+approval → make the real `.cshtml`/`.cs` change, preserving every existing model binding and
+`asp-*` attribute exactly → re-render the *actual* shipped file's markup (not the mockup) with
+Playwright and check for console errors → push. This caught at least one real bug before it
+shipped (the `text-danger`/custom-color conflict on `Track.cshtml`, WBS 14.6) that wasn't
+visible in the mockup itself.

@@ -5,69 +5,503 @@
     var ordersByStatus = (Dictionary<string, int>)ViewBag.OrdersByStatus;
     var recentOrders = (List<Order>)ViewBag.RecentOrders;
     var topProducts = ViewBag.TopProducts;
-}
-<div class="container my-5">
-    <h2 class="section-title">Admin: Dashboard</h2>
 
-    <div class="row g-4 mb-4">
-        <div class="col-md-4">
-            <div class="summary-panel">
-                <p class="text-muted small mb-1 text-uppercase">Total Revenue</p>
-                <h2 class="fw-bold text-cta mb-0">@totalRevenue.ToMoney()</h2>
-            </div>
+    // Same four fulfillment statuses AdminController.ValidStatuses restricts orders
+    // to; "other" is only a safety net in case that list ever changes without this
+    // view being updated too.
+    string StatusClass(string status) => status switch
+    {
+        "Processing" => "processing",
+        "Shipped" => "shipped",
+        "Delivered" => "delivered",
+        "Cancelled" => "cancelled",
+        _ => "other"
+    };
+
+    string StatusColorVar(string status) => status switch
+    {
+        "Processing" => "var(--status-processing)",
+        "Shipped" => "var(--status-shipped)",
+        "Delivered" => "var(--status-delivered)",
+        "Cancelled" => "var(--status-cancelled)",
+        _ => "var(--text-muted)"
+    };
+
+    int statusTotal = Math.Max(totalOrders, 1);
+
+    // Real per-day revenue for the last 14 days, built into JSON array literals
+    // here so the chart script below can drop them straight into Chart.js
+    // without re-parsing anything client-side. ViewBag.SalesByDay is a list of
+    // anonymous { Date, Revenue } objects, so it's walked with dynamic member
+    // access the same way topProducts already is above.
+    var salesByDay = ViewBag.SalesByDay;
+    var salesLabelsSb = new System.Text.StringBuilder();
+    var salesDataSb = new System.Text.StringBuilder();
+    bool firstSalesPoint = true;
+    foreach (var d in salesByDay)
+    {
+        if (!firstSalesPoint) { salesLabelsSb.Append(','); salesDataSb.Append(','); }
+        firstSalesPoint = false;
+        DateTime dDate = d.Date;
+        decimal dRevenue = d.Revenue;
+        salesLabelsSb.Append('"').Append(dDate.ToString("MMM d")).Append('"');
+        salesDataSb.Append(dRevenue.ToString(System.Globalization.CultureInfo.InvariantCulture));
+    }
+    string salesLabelsJson = "[" + salesLabelsSb + "]";
+    string salesDataJson = "[" + salesDataSb + "]";
+
+    // Same walk for ViewBag.TrafficByDay (from PageViewMiddleware, via
+    // AdminController). Its dates line up 1:1 with SalesByDay's, so the chart
+    // reuses salesLabelsJson for the shared x-axis rather than building a
+    // second, identical labels array.
+    var trafficByDay = ViewBag.TrafficByDay;
+    var trafficDataSb = new System.Text.StringBuilder();
+    bool firstTrafficPoint = true;
+    foreach (var d in trafficByDay)
+    {
+        if (!firstTrafficPoint) { trafficDataSb.Append(','); }
+        firstTrafficPoint = false;
+        int dViews = d.Views;
+        trafficDataSb.Append(dViews);
+    }
+    string trafficDataJson = "[" + trafficDataSb + "]";
+}
+<style>
+    /* Scoped to this page — reuses the site's existing theme tokens from site.css
+       so stat cards, panels and status colors all stay correct under the global
+       light/dark toggle, matching the treatment already shipped on Login/Register. */
+    .dash-eyebrow {
+        color: var(--brand-teal);
+        background: var(--ai-panel-bg);
+        border: 1px solid var(--ai-panel-border);
+        display: inline-flex;
+        padding: 5px 12px;
+        border-radius: 999px;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: .4px;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+    }
+
+    :root {
+        --status-processing: var(--brand-cta);
+        --status-shipped: var(--brand-teal);
+        --status-delivered: #16a34a;
+        --status-cancelled: #dc3545;
+    }
+    [data-theme="dark"] {
+        --status-delivered: #22c55e;
+    }
+
+    .dash-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+    }
+    .dash-header h1 { font-size: 28px; margin: 0 0 6px; font-weight: 700; color: var(--text-primary); }
+    .dash-header .sub { color: var(--text-muted); font-size: 14px; margin: 0; }
+    .dash-actions { display: flex; gap: 10px; }
+
+    .btn-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 16px;
+        border-radius: 999px;
+        font-size: 13.5px;
+        font-weight: 600;
+        font-family: inherit;
+        text-decoration: none;
+        border: 1.5px solid var(--card-border);
+        background: var(--card-bg);
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: border-color .15s ease;
+        appearance: none;
+        -webkit-appearance: none;
+    }
+    .btn-pill:hover { border-color: var(--brand-teal); color: var(--text-primary); }
+    .btn-pill.primary {
+        background: linear-gradient(135deg, #1fd6bf, var(--brand-teal));
+        border-color: transparent;
+        color: #04221d;
+    }
+    .btn-pill.primary:hover { color: #04221d; filter: brightness(1.03); }
+
+    .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+        margin-bottom: 24px;
+    }
+    .stat-card {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: var(--card-radius);
+        padding: 22px 22px 20px;
+        box-shadow: 0 10px 24px -18px rgba(20,33,61,.25);
+    }
+    .stat-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .stat-icon {
+        width: 38px; height: 38px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        flex: none;
+    }
+    .stat-icon.revenue { background: rgba(249,115,22,.12); color: var(--brand-cta); }
+    .stat-icon.orders { background: rgba(20,184,166,.12); color: var(--brand-teal); }
+    .stat-icon.status { background: rgba(20,33,61,.08); color: var(--brand-primary); }
+    [data-theme="dark"] .stat-icon.status { background: rgba(255,255,255,.08); color: var(--text-primary); }
+    .stat-label { font-size: 12px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: var(--text-muted); margin: 0; }
+    .stat-value { font-size: 30px; font-weight: 700; margin: 2px 0 0; color: var(--text-primary); }
+    .stat-value.cta { color: var(--brand-cta); }
+
+    .status-bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; background: var(--track-bg); margin: 4px 0 14px; }
+    .status-bar span { height: 100%; }
+    .status-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+    .status-legend li { display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+    .status-legend .dot-label { display: flex; align-items: center; gap: 8px; color: var(--text-primary); }
+    .status-legend .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+    .status-legend .count { font-weight: 700; color: var(--text-primary); }
+
+    .panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+    .panel {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: var(--card-radius);
+        padding: 22px;
+        box-shadow: 0 10px 24px -18px rgba(20,33,61,.25);
+    }
+    .panel-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .panel-title h3 { font-size: 15.5px; margin: 0; font-weight: 700; color: var(--text-primary); }
+    .panel-title .count-chip {
+        font-size: 11.5px; font-weight: 700; color: var(--text-muted);
+        background: var(--track-bg); padding: 3px 9px; border-radius: 999px;
+    }
+
+    .rank-row {
+        display: grid;
+        grid-template-columns: 26px 1fr auto auto;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--card-border);
+    }
+    .rank-row:last-child { border-bottom: none; }
+    .rank-num {
+        width: 22px; height: 22px; border-radius: 6px;
+        background: var(--track-bg); color: var(--text-muted);
+        font-size: 11px; font-weight: 700;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .rank-name { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+    .rank-qty { font-size: 12.5px; color: var(--text-muted); text-align: right; white-space: nowrap; }
+    .rank-rev { font-size: 13.5px; font-weight: 700; text-align: right; white-space: nowrap; color: var(--text-primary); }
+
+    .order-row {
+        display: grid;
+        grid-template-columns: 48px 1fr auto auto;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--card-border);
+    }
+    .order-row:last-child { border-bottom: none; }
+    .order-id { font-size: 12.5px; color: var(--text-muted); font-weight: 600; }
+    .order-name { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+    .order-total { font-size: 13.5px; font-weight: 700; text-align: right; white-space: nowrap; color: var(--text-primary); }
+    .status-pill {
+        display: inline-flex; align-items: center; gap: 5px;
+        font-size: 11.5px; font-weight: 700;
+        padding: 4px 10px; border-radius: 999px;
+        white-space: nowrap;
+    }
+    .status-pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .status-pill.processing { background: rgba(249,115,22,.12); color: var(--brand-cta); }
+    .status-pill.shipped { background: rgba(20,184,166,.12); color: var(--brand-teal); }
+    .status-pill.delivered { background: rgba(22,163,74,.12); color: var(--status-delivered); }
+    .status-pill.cancelled { background: rgba(220,53,69,.12); color: var(--status-cancelled); }
+    .status-pill.other { background: var(--track-bg); color: var(--text-primary); }
+
+    .empty-row { color: var(--text-muted); font-size: 13.5px; padding: 10px 0; }
+
+    .panel-actions { display: flex; gap: 10px; margin-top: 16px; }
+    /* A pill button whose background is var(--card-bg) is invisible sitting on a
+       panel that shares that same background — confirmed via a dark-mode render,
+       where the border alone (rgba(255,255,255,.1)) didn't read as a button edge.
+       Buttons nested inside a panel get the track-bg fill instead, which is
+       always distinct from card-bg in both themes. */
+    .panel-actions .btn-pill { background: var(--track-bg); border-color: transparent; }
+    .panel-actions .btn-pill:hover { border-color: var(--brand-teal); }
+    .panel-actions.centered { justify-content: center; }
+    .panel-actions.centered .btn-pill { flex: none; padding-left: 28px; padding-right: 28px; }
+
+    .chart-panel { margin-top: 18px; }
+    .chart-wrap { height: 260px; }
+    .chart-note { font-size: 12px; color: var(--text-muted); margin: 14px 0 0; }
+
+    @@media (max-width: 860px) {
+        .stat-grid { grid-template-columns: 1fr; }
+        .panel-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="container my-5">
+    <div class="dash-header">
+        <div>
+            <span class="dash-eyebrow">Admin</span>
+            <h1>Dashboard</h1>
+            <p class="sub">Store performance at a glance.</p>
         </div>
-        <div class="col-md-4">
-            <div class="summary-panel">
-                <p class="text-muted small mb-1 text-uppercase">Total Orders</p>
-                <h2 class="fw-bold mb-0">@totalOrders</h2>
-            </div>
+        <div class="dash-actions">
+            <a asp-action="Orders" class="btn-pill">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
+                View all orders
+            </a>
+            <a asp-action="ExportOrdersCsv" class="btn-pill primary">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0-4-4m4 4 4-4" /><path d="M4 17v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" /></svg>
+                Export CSV
+            </a>
         </div>
-        <div class="col-md-4">
-            <div class="summary-panel">
-                <p class="text-muted small mb-2 text-uppercase">By Status</p>
-                @foreach (var kv in ordersByStatus)
-                {
-                    <span class="badge text-bg-secondary me-1">@kv.Key: @kv.Value</span>
-                }
+    </div>
+
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="stat-top">
+                <p class="stat-label">Total Revenue</p>
+                <div class="stat-icon revenue">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+                </div>
+            </div>
+            <h2 class="stat-value cta">@totalRevenue.ToMoney()</h2>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-top">
+                <p class="stat-label">Total Orders</p>
+                <div class="stat-icon orders">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>
+                </div>
+            </div>
+            <h2 class="stat-value">@totalOrders</h2>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-top">
+                <p class="stat-label">By Status</p>
+                <div class="stat-icon status">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18" /><path d="M18 17V9M13 17V5M8 17v-3" /></svg>
+                </div>
+            </div>
+            @if (ordersByStatus.Count == 0)
+            {
+                <p class="empty-row mb-0">No orders yet.</p>
+            }
+            else
+            {
+                <div class="status-bar">
+                    @foreach (var kv in ordersByStatus)
+                    {
+                        <span style="width:@((kv.Value * 100.0 / statusTotal).ToString("0.##"))%;background:@StatusColorVar(kv.Key);"></span>
+                    }
+                </div>
+                <ul class="status-legend">
+                    @foreach (var kv in ordersByStatus)
+                    {
+                        <li>
+                            <span class="dot-label"><span class="dot" style="background:@StatusColorVar(kv.Key);"></span>@kv.Key</span>
+                            <span class="count">@kv.Value</span>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+
+    <div class="panel-grid">
+        <div class="panel">
+            <div class="panel-title">
+                <h3>Top Products</h3>
+                <span class="count-chip">By revenue</span>
+            </div>
+
+            @{ int rank = 0; }
+            @foreach (var p in topProducts)
+            {
+                rank++;
+                <div class="rank-row">
+                    <span class="rank-num">@rank</span>
+                    <span class="rank-name">@p.Name</span>
+                    <span class="rank-qty">@p.Quantity sold</span>
+                    <span class="rank-rev">@(((decimal)p.Revenue).ToMoney())</span>
+                </div>
+            }
+            @if (rank == 0)
+            {
+                <p class="empty-row mb-0">No product sales yet.</p>
+            }
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">
+                <h3>Recent Orders</h3>
+                <span class="count-chip">Last @recentOrders.Count</span>
+            </div>
+
+            @foreach (var o in recentOrders)
+            {
+                <div class="order-row">
+                    <span class="order-id">#@o.Id</span>
+                    <span class="order-name">@o.CustomerName</span>
+                    <span class="order-total">@o.Total.ToMoney()</span>
+                    <span class="status-pill @StatusClass(o.Status)"><span class="dot" style="background:@StatusColorVar(o.Status);"></span>@o.Status</span>
+                </div>
+            }
+            @if (recentOrders.Count == 0)
+            {
+                <p class="empty-row mb-0">No orders yet.</p>
+            }
+
+            <div class="panel-actions centered">
+                <button type="button" id="toggleSalesTrafficBtn" class="btn-pill">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18" /><path d="m19 9-5 5-4-4-3 3" /></svg>
+                    Sales &amp; Traffic
+                </button>
             </div>
         </div>
     </div>
 
-    <div class="row g-4">
-        <div class="col-md-6">
-            <h5>Top Products</h5>
-            <table class="table table-sm align-middle">
-                <thead><tr><th>Product</th><th>Qty Sold</th><th>Revenue</th></tr></thead>
-                <tbody>
-                    @foreach (var p in topProducts)
-                    {
-                        <tr>
-                            <td>@p.Name</td>
-                            <td>@p.Quantity</td>
-                            <td>@(((decimal)p.Revenue).ToMoney())</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+    <div class="panel chart-panel" id="salesTrafficPanel" hidden>
+        <div class="panel-title">
+            <h3>Sales &amp; Traffic</h3>
+            <span class="count-chip">Last 14 days</span>
         </div>
-        <div class="col-md-6">
-            <h5>Recent Orders</h5>
-            <table class="table table-sm align-middle">
-                <thead><tr><th>#</th><th>Customer</th><th>Total</th><th>Status</th></tr></thead>
-                <tbody>
-                    @foreach (var o in recentOrders)
-                    {
-                        <tr>
-                            <td>#@o.Id</td>
-                            <td>@o.CustomerName</td>
-                            <td>@o.Total.ToMoney()</td>
-                            <td><span class="badge text-bg-secondary">@o.Status</span></td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-            <a asp-action="Orders" class="btn btn-sm btn-outline-secondary">View all orders</a>
-            <a asp-action="ExportOrdersCsv" class="btn btn-sm btn-outline-secondary">⬇ Export CSV</a>
+        <div class="chart-wrap">
+            <canvas id="salesTrafficChart" height="90" data-sales-labels="@salesLabelsJson" data-sales-data="@salesDataJson" data-traffic-data="@trafficDataJson"></canvas>
         </div>
+        <p class="chart-note">Traffic is tracked for real page views.</p>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            var canvas = document.getElementById('salesTrafficChart');
+            var panel = document.getElementById('salesTrafficPanel');
+            var toggleBtn = document.getElementById('toggleSalesTrafficBtn');
+            if (!canvas || !panel || !toggleBtn) return;
+
+            function cssVar(name) {
+                return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+            }
+
+            var chart = null;
+
+            // The panel starts hidden (see the `hidden` attribute in the markup),
+            // so the chart is only built the first time it's actually revealed —
+            // building it earlier would size the canvas against a display:none
+            // ancestor and leave it stuck at 0×0.
+            function buildChartIfNeeded() {
+                if (chart || typeof Chart === 'undefined') return;
+
+                // The sales series comes from the server via data-* attributes
+                // (rendered by AdminController.Dashboard(), grouped from real
+                // orders) rather than being interpolated straight into this
+                // <script> block — keeps this file valid, lintable JavaScript
+                // with no Razor syntax inside the script tag.
+                var labels = JSON.parse(canvas.dataset.salesLabels);
+                var salesData = JSON.parse(canvas.dataset.salesData);
+                // Real page-view counts, recorded per request by
+                // PageViewMiddleware and grouped by day in
+                // AdminController.Dashboard() — see the note under the chart
+                // about early days reading 0 until history builds up.
+                var trafficData = JSON.parse(canvas.dataset.trafficData);
+
+                chart = new Chart(canvas.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'OUR SALES',
+                                data: salesData,
+                                borderColor: cssVar('--brand-teal'),
+                                backgroundColor: 'transparent',
+                                yAxisID: 'y',
+                                tension: 0.35,
+                                pointRadius: 2,
+                                borderWidth: 2.5,
+                            },
+                            {
+                                label: 'TRAFFIC',
+                                data: trafficData,
+                                borderColor: cssVar('--text-muted'),
+                                backgroundColor: 'transparent',
+                                yAxisID: 'y1',
+                                tension: 0.35,
+                                pointRadius: 2,
+                                borderWidth: 2,
+                                borderDash: [6, 4],
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: { labels: { color: cssVar('--text-primary'), usePointStyle: true, boxWidth: 8 } },
+                        },
+                        scales: {
+                            x: { ticks: { color: cssVar('--text-muted') }, grid: { color: cssVar('--card-border') } },
+                            y: {
+                                position: 'left',
+                                ticks: { color: cssVar('--text-muted'), callback: function (v) { return '$' + v; } },
+                                grid: { color: cssVar('--card-border') },
+                            },
+                            y1: {
+                                position: 'right',
+                                ticks: { color: cssVar('--text-muted') },
+                                grid: { drawOnChartArea: false },
+                            },
+                        },
+                    },
+                });
+
+                // The theme toggle (site.js) flips data-theme on <html> without a
+                // page reload, so the chart needs to re-read the CSS variables
+                // and redraw when that happens, or it'll keep its start colors.
+                new MutationObserver(function () {
+                    chart.options.plugins.legend.labels.color = cssVar('--text-primary');
+                    chart.options.scales.x.ticks.color = cssVar('--text-muted');
+                    chart.options.scales.x.grid.color = cssVar('--card-border');
+                    chart.options.scales.y.ticks.color = cssVar('--text-muted');
+                    chart.options.scales.y.grid.color = cssVar('--card-border');
+                    chart.options.scales.y1.ticks.color = cssVar('--text-muted');
+                    chart.data.datasets[0].borderColor = cssVar('--brand-teal');
+                    chart.data.datasets[1].borderColor = cssVar('--text-muted');
+                    chart.update();
+                }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+            }
+
+            toggleBtn.addEventListener('click', function () {
+                var isHidden = panel.hasAttribute('hidden');
+                if (isHidden) {
+                    panel.removeAttribute('hidden');
+                    buildChartIfNeeded();
+                    // Defensive: if the chart already existed (e.g. re-opened
+                    // after being hidden again), its layout needs recomputing
+                    // now that the panel has real dimensions again.
+                    if (chart) { chart.resize(); }
+                    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    panel.setAttribute('hidden', '');
+                }
+            });
+        })();
+    </script>
+}

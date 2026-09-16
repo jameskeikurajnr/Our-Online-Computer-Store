@@ -12,7 +12,10 @@ namespace OnlineComputerStore.Core.Controllers
 {
     public class ShopController : Controller
     {
-        private const int PageSize = 8;
+        // 12 keeps the largest category (Laptops, 12 products) on a single page —
+        // with the col-md-3 grid that's a clean 3 full rows of 4, and every other
+        // category (6 or fewer) already fit well within the old PageSize of 8.
+        private const int PageSize = 12;
 
         // Categories treated as "a device" for the Complete Your Setup bundle,
         // and the essentials categories it pulls one pick from for each.
@@ -34,9 +37,18 @@ namespace OnlineComputerStore.Core.Controllers
             _orders = orders;
         }
 
-        public async Task<IActionResult> Index(string? sort = "name", int page = 1)
+        public async Task<IActionResult> Index(string? sort = "name", int page = 1, string? category = null)
         {
             var all = (await _products.GetAllAsync()).ToList();
+
+            // Hero buttons like "Shop Laptops" link straight in with a category —
+            // filtered against the same Category string used for the device/setup
+            // bundle matching above, so it stays consistent with the rest of the
+            // catalog's category values.
+            if (!string.IsNullOrWhiteSpace(category))
+            {
+                all = all.Where(p => string.Equals(p.Category, category, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
 
             all = sort switch
             {
@@ -53,14 +65,30 @@ namespace OnlineComputerStore.Core.Controllers
             ViewBag.Sort = sort;
             ViewBag.Page = page;
             ViewBag.TotalPages = totalPages;
+            ViewBag.Category = category;
             ViewBag.WishlistIds = await GetWishlistIdsAsync();
 
-            // Next 7 from the same trending ranking Home takes its top 3 from
-            // (skipping those 3), so this shelf never repeats what's on Home —
-            // and only on page 1, so it doesn't reappear while paging through the grid.
-            ViewBag.Trending = page == 1
-                ? (await _products.GetTrendingAsync()).Skip(3).Take(7).ToList()
-                : new List<Product>();
+            if (page == 1 && !string.IsNullOrWhiteSpace(category))
+            {
+                // A category filter is active: the global trending ranking would
+                // otherwise mix in items from other categories the page is
+                // intentionally hiding, so re-rank within just this category
+                // instead. Home's top 3 come from the unfiltered ranking, so
+                // there's no guaranteed overlap here to skip past.
+                ViewBag.Trending = (await _products.GetTrendingAsync())
+                    .Where(p => string.Equals(p.Category, category, StringComparison.OrdinalIgnoreCase))
+                    .Take(4)
+                    .ToList();
+            }
+            else
+            {
+                // Next 7 from the same trending ranking Home takes its top 3 from
+                // (skipping those 3), so this shelf never repeats what's on Home —
+                // and only on page 1, so it doesn't reappear while paging through the grid.
+                ViewBag.Trending = page == 1
+                    ? (await _products.GetTrendingAsync()).Skip(3).Take(7).ToList()
+                    : new List<Product>();
+            }
 
             return View(pageItems);
         }

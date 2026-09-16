@@ -110,6 +110,81 @@ namespace OnlineComputerStore.Core.Data
                 },
                 new Product
                 {
+                    Name = "Microsoft Surface Laptop 6",
+                    Brand = "Microsoft",
+                    ShortSpecs = "Intel Core Ultra 7 • 16GB RAM • 512GB SSD",
+                    Description = "A sleek, premium ultrabook with all-day battery life and a vibrant touchscreen — built for productivity on the move.",
+                    Price = 1799m,
+                    // No real product photo available for this listing yet — shows a
+                    // brand-colored "photo coming soon" placeholder (one per product, so
+                    // the grid reads as distinct listings) until real photos are added.
+                    ImageUrl = "/images/placeholder-microsoft-surface.jpg",
+                    Category = "Laptops",
+                    IsFeatured = true,
+                    StockQuantity = 14
+                },
+                new Product
+                {
+                    Name = "Acer Swift Go 14",
+                    Brand = "Acer",
+                    ShortSpecs = "Intel i5 • 16GB RAM • 512GB SSD",
+                    Description = "A lightweight everyday laptop that balances solid performance with a genuinely affordable price.",
+                    Price = 999m,
+                    ImageUrl = "/images/placeholder-acer-swift-go.jpg",
+                    Category = "Laptops",
+                    IsFeatured = false,
+                    StockQuantity = 20
+                },
+                new Product
+                {
+                    Name = "Razer Blade 16",
+                    Brand = "Razer",
+                    ShortSpecs = "Intel i9 • 32GB RAM • RTX 4080",
+                    Description = "A no-compromise gaming laptop with a high refresh-rate display and flagship graphics power in a portable chassis.",
+                    Price = 3299m,
+                    ImageUrl = "/images/placeholder-razer-blade.jpg",
+                    Category = "Laptops",
+                    IsFeatured = true,
+                    StockQuantity = 6
+                },
+                new Product
+                {
+                    Name = "LG Gram 17",
+                    Brand = "LG",
+                    ShortSpecs = "Intel i7 • 16GB RAM • 1TB SSD",
+                    Description = "An ultra-lightweight 17-inch laptop that packs a big screen into a surprisingly compact, travel-friendly frame.",
+                    Price = 1699m,
+                    ImageUrl = "/images/placeholder-lg-gram.jpg",
+                    Category = "Laptops",
+                    IsFeatured = false,
+                    StockQuantity = 12
+                },
+                new Product
+                {
+                    Name = "Dell Inspiron 15",
+                    Brand = "Dell",
+                    ShortSpecs = "Intel i5 • 8GB RAM • 512GB SSD",
+                    Description = "A dependable, budget-friendly laptop for everyday browsing, study, and schoolwork.",
+                    Price = 799m,
+                    ImageUrl = "/images/placeholder-dell-inspiron.jpg",
+                    Category = "Laptops",
+                    IsFeatured = false,
+                    StockQuantity = 25
+                },
+                new Product
+                {
+                    Name = "MSI Stealth 15M",
+                    Brand = "MSI",
+                    ShortSpecs = "Intel i7 • 16GB RAM • RTX 4060",
+                    Description = "A slim gaming laptop that punches above its weight, with dedicated graphics for smooth 1080p gaming on the go.",
+                    Price = 1899m,
+                    ImageUrl = "/images/placeholder-msi-stealth.jpg",
+                    Category = "Laptops",
+                    IsFeatured = false,
+                    StockQuantity = 10
+                },
+                new Product
+                {
                     Name = "Apple iPad Pro 12.9\"",
                     Brand = "Apple",
                     ShortSpecs = "Apple M2 • 256GB • Wi-Fi",

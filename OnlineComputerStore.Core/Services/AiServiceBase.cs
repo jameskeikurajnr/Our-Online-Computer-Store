@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -17,6 +20,8 @@ namespace OnlineComputerStore.Core.Services
         private readonly HttpClient _http;
         protected readonly AiOptions Options;
 
+        private const string DefaultSystemPrompt = "You are a helpful, concise AI assistant embedded in an online computer store website.";
+
         protected AiServiceBase(HttpClient http, IOptions<AiOptions> options)
         {
             _http = http;
@@ -25,13 +30,32 @@ namespace OnlineComputerStore.Core.Services
 
         protected bool IsConfigured => Options.Enabled && !string.IsNullOrWhiteSpace(Options.ApiKey);
 
-        protected async Task<string> AskAsync(string prompt, double temperature = 0.3)
+        // Single-shot form — what every AI feature except the chat assistant
+        // uses: one fixed system persona, no history, one prompt in, one
+        // reply out.
+        protected Task<string> AskAsync(string prompt, double temperature = 0.3) =>
+            AskAsync(DefaultSystemPrompt, Array.Empty<(string Role, string Content)>(), prompt, temperature);
+
+        // Multi-turn form — for the chat assistant: its own system prompt
+        // (the full product catalog and tagging instructions live here, see
+        // AiAssistantService), the last few turns of the conversation for
+        // context, then the newest user message.
+        protected async Task<string> AskAsync(string systemPrompt, IEnumerable<(string Role, string Content)> history, string userMessage, double temperature = 0.3)
         {
             if (!IsConfigured)
             {
                 return "AI not configured yet — add your OpenAI API key in appsettings.json.";
             }
 
+            var messages = new List<OpenAiMessage> { new OpenAiMessage { Role = "system", Content = systemPrompt } };
+            messages.AddRange(history.Select(t => new OpenAiMessage { Role = t.Role, Content = t.Content }));
+            messages.Add(new OpenAiMessage { Role = "user", Content = userMessage });
+
+            return await SendAsync(messages, temperature);
+        }
+
+        private async Task<string> SendAsync(List<OpenAiMessage> messages, double temperature)
+        {
             try
             {
                 var endpoint = string.IsNullOrWhiteSpace(Options.Endpoint)
@@ -44,11 +68,7 @@ namespace OnlineComputerStore.Core.Services
                     {
                         Model = string.IsNullOrWhiteSpace(Options.Model) ? "gpt-4o-mini" : Options.Model,
                         Temperature = temperature,
-                        Messages = new[]
-                        {
-                            new OpenAiMessage { Role = "system", Content = "You are a helpful, concise AI assistant embedded in an online computer store website." },
-                            new OpenAiMessage { Role = "user", Content = prompt }
-                        }
+                        Messages = messages.ToArray()
                     })
                 };
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Options.ApiKey);
@@ -67,7 +87,7 @@ namespace OnlineComputerStore.Core.Services
                     ? "The AI provider returned an empty response. Please try again."
                     : text.Trim();
             }
-            catch (System.Exception)
+            catch (Exception)
             {
                 return "The AI assistant couldn't be reached just now. Please try again shortly.";
             }
@@ -79,7 +99,7 @@ namespace OnlineComputerStore.Core.Services
         private class OpenAiChatRequest
         {
             [JsonPropertyName("model")] public string Model { get; set; } = "";
-            [JsonPropertyName("messages")] public OpenAiMessage[] Messages { get; set; } = System.Array.Empty<OpenAiMessage>();
+            [JsonPropertyName("messages")] public OpenAiMessage[] Messages { get; set; } = Array.Empty<OpenAiMessage>();
             [JsonPropertyName("temperature")] public double Temperature { get; set; }
         }
 

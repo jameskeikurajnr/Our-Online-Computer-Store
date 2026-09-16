@@ -9,7 +9,7 @@
   50% { box-shadow: 0 6px 18px rgba(249,115,22,.55); }
 }
 #assistant-panel {
-  position: absolute; bottom: 70px; right: 0; width: 320px; max-height: 440px;
+  position: absolute; bottom: 70px; right: 0; width: 350px; max-height: 480px;
   background: var(--card-bg); color: var(--text-primary);
   border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.25);
   display: none; flex-direction: column; overflow: hidden;
@@ -20,16 +20,80 @@
   /* Deliberately fixed, not theme-tokened — matches the site header's own
      navy regardless of light/dark mode, so this always has its own
      explicit white text rather than ever depending on inherited color. */
-  background: #14213d; color: #fff; padding: .75rem 1rem; display: flex; justify-content: space-between; align-items: center;
+  background: #14213d; color: #fff; padding: .8rem 1rem; display: flex; justify-content: space-between; align-items: flex-start;
 }
-.assistant-header button { background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer; }
-#assistant-messages { flex: 1; overflow-y: auto; padding: .75rem; max-height: 280px; }
-.msg { margin: 6px 0; padding: 8px 12px; border-radius: 10px; max-width: 85%; font-size: .9rem; }
+.assistant-title { font-weight: 700; font-size: .95rem; }
+.assistant-subtitle { font-size: .69rem; color: rgba(255,255,255,.65); margin-top: 2px; }
+.assistant-header button { background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer; line-height: 1; }
+
+#assistant-messages { flex: 1; overflow-y: auto; padding: .8rem; max-height: 340px; }
+.msg { margin: 7px 0; padding: 9px 12px; border-radius: 12px; max-width: 88%; font-size: .87rem; line-height: 1.42; }
 /* Both bubbles set their own text color explicitly — previously .msg had
    none, so it fell back to inheriting body's theme-driven color, which
    turned near-white in dark mode against these always-light bubbles. */
-.msg.user { background: rgba(20,184,166,.18); color: var(--text-primary); margin-left: auto; text-align: right; }
-.msg.ai { background: var(--track-bg); color: var(--text-primary); }
+.msg.user { background: rgba(20,184,166,.18); color: var(--text-primary); margin-left: auto; text-align: right; border-bottom-right-radius: 4px; }
+.msg.ai { background: var(--track-bg); color: var(--text-primary); border-bottom-left-radius: 4px; }
+.msg.note {
+  background: transparent; color: var(--text-muted); font-size: .72rem;
+  max-width: 100%; text-align: center; margin: 2px 0 10px; padding: 0;
+}
+
+.msg.typing-wrap { background: transparent; padding: 0; }
+.typing { display: inline-flex; align-items: center; gap: 4px; background: var(--track-bg); padding: 10px 14px; border-radius: 12px; border-bottom-left-radius: 4px; }
+.typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); animation: assistant-bounce 1.2s infinite ease-in-out; display: inline-block; }
+.typing span:nth-child(2) { animation-delay: .15s; }
+.typing span:nth-child(3) { animation-delay: .3s; }
+@keyframes assistant-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: .5; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 2px; }
+.chip {
+  border: 1.5px solid var(--card-border); background: transparent; color: var(--text-primary);
+  border-radius: 999px; padding: 6px 12px; font-size: .72rem; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+}
+.chip:hover { border-color: #14b8a6; color: #14b8a6; }
+
+/* Horizontal scroll-snap carousel of compact photo-cards, sized so ~2.7
+   cards are visible in the panel's ~322px content width — enough to see
+   2-3 real products at once, with more reachable by scrolling the row
+   rather than scrolling the whole message list. */
+.product-cards {
+  display: flex; flex-direction: row; gap: 8px;
+  overflow-x: auto; padding: 2px 2px 8px; margin: 2px 0 2px;
+  scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch;
+}
+.product-card {
+  flex: 0 0 106px; scroll-snap-align: start;
+  display: flex; flex-direction: column;
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: 10px; overflow: hidden; text-decoration: none; color: inherit;
+  transition: border-color .15s ease, transform .15s ease;
+}
+.product-card:hover { border-color: #14b8a6; transform: translateY(-1px); }
+.product-thumb {
+  width: 100%; height: 70px; flex: none;
+  background: var(--track-bg); color: var(--text-muted); overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.product-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.product-card-body { padding: 6px 7px 8px; display: flex; flex-direction: column; gap: 3px; }
+.product-name {
+  font-size: .68rem; font-weight: 600; line-height: 1.25; color: var(--text-primary);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; min-height: 1.7em;
+}
+.product-meta { font-size: .6rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+.product-price { font-weight: 700; color: var(--text-primary); font-size: .72rem; }
+.stock-dot { width: 5px; height: 5px; border-radius: 50%; flex: none; }
+.stock-dot.in { background: #16a34a; }
+.stock-dot.out { background: #dc3545; }
+[data-theme="dark"] .stock-dot.in { background: #22c55e; }
+
+.scroll-fade-note { font-size: .65rem; color: var(--text-muted); text-align: right; margin: -2px 0 10px; }
+
 .assistant-input-row { display: flex; border-top: 1px solid var(--card-border); }
 .assistant-input-row input {
   flex: 1; border: none; padding: .6rem;
@@ -41,9 +105,9 @@
   border: none; background: #14b8a6; color: #04221d; padding: 0 1rem; font-weight: 600; cursor: pointer;
 }
 
-/* On narrow phones a fixed 320px panel pinned to the right edge can run off
+/* On narrow phones a fixed-width panel pinned to the right edge can run off
    the left side of the screen. Let it shrink to fit instead. */
 @media (max-width: 400px) {
   #assistant-widget { right: 12px; bottom: 12px; }
-  #assistant-panel { width: calc(100vw - 24px); right: -12px; max-height: min(440px, 70vh); }
+  #assistant-panel { width: calc(100vw - 24px); right: -12px; max-height: min(480px, 70vh); }
 }

@@ -170,6 +170,24 @@ namespace OnlineComputerStore.Core.Migrations
                     b.ToTable("OrderItems");
                 });
 
+            modelBuilder.Entity("OnlineComputerStore.Core.Models.PageView", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PageViews");
+                });
+
             modelBuilder.Entity("OnlineComputerStore.Core.Models.PasswordResetToken", b =>
                 {
                     b.Property<int>("Id")

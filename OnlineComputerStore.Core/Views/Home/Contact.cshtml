@@ -1,78 +1,221 @@
 @model ContactViewModel
 @{
-    ViewData["Title"] = "Contact Us";
+    ViewData["Title"] = "Contacting Us";
 }
+<style>
+    /* Scoped to this page's own rendered document — reuses the site's existing
+       theme tokens (--brand-primary/--brand-teal/--card-bg/--text-primary/etc.
+       from site.css) the same way Login/Register already do, so Contact stays
+       correct under the global light/dark toggle without redefining its own
+       color system. */
+
+    .contact-hero {
+        text-align: center;
+        max-width: 640px;
+        margin: 0 auto 40px;
+    }
+    .contact-eyebrow {
+        color: var(--brand-teal); background: var(--ai-panel-bg); border: 1px solid var(--ai-panel-border);
+        display: inline-flex; padding: 5px 14px; border-radius: 999px;
+        font-size: 11.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 14px;
+    }
+    .contact-hero h1 { font-size: 32px; font-weight: 700; margin: 0 0 10px; color: var(--text-primary); }
+    .contact-hero p { color: var(--text-muted); font-size: 15px; margin: 0; }
+
+    .contact-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 28px; align-items: start; }
+
+    .contact-card {
+        background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--card-radius);
+        box-shadow: 0 20px 45px -28px rgba(20,33,61,.35), 0 2px 10px rgba(20,33,61,.06);
+        padding: 36px;
+    }
+
+    .contact-alert {
+        display: flex; gap: 10px; align-items: flex-start;
+        padding: 12px 14px; border-radius: 10px; font-size: 13.5px; margin-bottom: 20px;
+    }
+    .contact-alert.success { background: #eafaf3; border: 1px solid #b9edd8; color: #0d6b45; }
+    [data-theme="dark"] .contact-alert.success { background: rgba(20,184,166,.12); border-color: rgba(20,184,166,.3); color: #7be3c9; }
+    .contact-alert.warning { background: #fff8ec; border: 1px solid #f5dfb3; color: #8a5a00; }
+    [data-theme="dark"] .contact-alert.warning { background: rgba(249,115,22,.12); border-color: rgba(249,115,22,.3); color: #ffc98a; }
+    .contact-alert svg { flex: none; margin-top: 1px; }
+
+    .contact-field { margin-bottom: 18px; }
+    .contact-field label { display: block; font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 7px; }
+    .contact-input-wrap { position: relative; display: flex; align-items: flex-start; }
+    .contact-input-wrap svg.f-icon { position: absolute; left: 14px; top: 12px; color: var(--text-muted); pointer-events: none; }
+    .contact-input-wrap input, .contact-input-wrap textarea {
+        width: 100%; padding: 12px 14px 12px 42px; border-radius: 10px;
+        border: 1.5px solid var(--input-border); font-size: 14.5px; font-family: inherit;
+        background: var(--input-bg); color: var(--text-primary);
+        transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .contact-input-wrap textarea { resize: vertical; min-height: 120px; }
+    .contact-input-wrap input:focus, .contact-input-wrap textarea:focus {
+        outline: none; border-color: var(--brand-teal);
+        box-shadow: 0 0 0 4px rgba(20,184,166,.15);
+    }
+    .contact-input-wrap input.input-validation-error, .contact-input-wrap textarea.input-validation-error { border-color: #dc3545; }
+
+    .contact-row-two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    .btn-contact-send {
+        border: none; padding: 13px 26px; border-radius: 10px;
+        font-size: 15px; font-weight: 700; color: #04221d;
+        background: linear-gradient(135deg, #1fd6bf, var(--brand-teal));
+        box-shadow: 0 10px 22px -8px rgba(20,184,166,.55); cursor: pointer;
+    }
+    .btn-contact-send:hover { color: #04221d; filter: brightness(1.03); }
+
+    .contact-note { color: var(--text-muted); font-size: 13px; margin: 18px 0 0; text-align: center; }
+
+    /* Right column: store info */
+    .store-card {
+        background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--card-radius);
+        box-shadow: 0 20px 45px -28px rgba(20,33,61,.35), 0 2px 10px rgba(20,33,61,.06);
+        padding: 28px; margin-bottom: 20px;
+    }
+    .store-card h5 { font-size: 16px; font-weight: 700; margin: 0 0 18px; color: var(--text-primary); }
+
+    .store-block + .store-block { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--card-border); }
+    .store-name { color: var(--brand-teal); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 12px; }
+
+    .store-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; }
+    .store-row:last-child { margin-bottom: 0; }
+    .store-ico {
+        width: 28px; height: 28px; flex: none; background: var(--ai-panel-bg);
+        border: 1px solid var(--ai-panel-border); border-radius: 8px; color: var(--brand-teal);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .store-text { font-size: 13.5px; color: var(--text-primary); line-height: 1.5; }
+    .store-text .label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; margin-bottom: 2px; }
+
+    .email-card { display: flex; align-items: center; gap: 14px; }
+    .email-card .store-ico { width: 40px; height: 40px; border-radius: 10px; }
+    .email-card a { color: var(--text-primary); font-weight: 700; text-decoration: none; font-size: 14.5px; }
+    .email-card a:hover { color: var(--brand-teal); text-decoration: underline; }
+    .email-card .label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; margin-bottom: 3px; }
+
+    @@media (max-width: 900px) {
+        .contact-grid { grid-template-columns: 1fr; }
+        .contact-card { padding: 26px 22px; }
+        .contact-row-two { grid-template-columns: 1fr; gap: 0; }
+        .contact-hero h1 { font-size: 26px; }
+    }
+</style>
 
 <div class="container my-5">
-    <h3 class="section-title">Contact Us</h3>
-    <p class="text-muted mb-4">Any enquiry?.. We'll gladly get back to you the soonest.</p>
 
-    <div class="row g-5">
-        <div class="col-lg-7">
+    <div class="contact-hero">
+        <span class="contact-eyebrow">Get in Touch By </span>
+        <h1>Contacting Us</h1>
+        <p>Any enquiry?.. We'll gladly get back to you the soonest.</p>
+    </div>
+
+    <div class="contact-grid">
+        <div class="contact-card">
             @if (TempData["ContactSuccess"] != null)
             {
-                <div class="alert alert-success">
-                    Thank you, We'll be in touch. God Bless you!
+                <div class="contact-alert success">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+                    <span>Thank you, We'll be in touch. God Bless you!</span>
                 </div>
             }
             @if (TempData["ContactError"] != null)
             {
-                <div class="alert alert-warning">
-                    @TempData["ContactError"]
+                <div class="contact-alert warning">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4" /><path d="M12 17h.01" /><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" /></svg>
+                    <span>@TempData["ContactError"]</span>
                 </div>
             }
 
             <form asp-controller="Home" asp-action="Contact" method="post" novalidate>
-                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
 
-                <div class="mb-3">
-                    <label class="form-label" asp-for="Name"></label>
-                    <input class="form-control" asp-for="Name" />
-                    <span class="text-danger small" asp-validation-for="Name"></span>
+                <div class="contact-row-two">
+                    <div class="contact-field">
+                        <label asp-for="Name"></label>
+                        <div class="contact-input-wrap">
+                            <svg class="f-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0" /><circle cx="12" cy="7" r="4" /></svg>
+                            <input class="contact-input" asp-for="Name" placeholder="Your full name" />
+                        </div>
+                        <span class="text-danger small" asp-validation-for="Name"></span>
+                    </div>
+                    <div class="contact-field">
+                        <label asp-for="Email"></label>
+                        <div class="contact-input-wrap">
+                            <svg class="f-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 6 9 7 9-7" /><rect x="3" y="5" width="18" height="14" rx="2" /></svg>
+                            <input class="contact-input" asp-for="Email" placeholder="you@@example.com" />
+                        </div>
+                        <span class="text-danger small" asp-validation-for="Email"></span>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label" asp-for="Email"></label>
-                    <input class="form-control" asp-for="Email" />
-                    <span class="text-danger small" asp-validation-for="Email"></span>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label" asp-for="Subject"></label>
-                    <input class="form-control" asp-for="Subject" />
+                <div class="contact-field">
+                    <label asp-for="Subject"></label>
+                    <div class="contact-input-wrap">
+                        <svg class="f-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                        <input class="contact-input" asp-for="Subject" placeholder="What's this about?" />
+                    </div>
                     <span class="text-danger small" asp-validation-for="Subject"></span>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label" asp-for="Message"></label>
-                    <textarea class="form-control" rows="5" asp-for="Message"></textarea>
+                <div class="contact-field">
+                    <label asp-for="Message"></label>
+                    <div class="contact-input-wrap">
+                        <svg class="f-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                        <textarea class="contact-input" rows="5" asp-for="Message" placeholder="Tell us a bit more..."></textarea>
+                    </div>
                     <span class="text-danger small" asp-validation-for="Message"></span>
                 </div>
 
-                <button type="submit" class="btn btn-cta">Send</button>
+                <button type="submit" class="btn-contact-send">Send Message</button>
             </form>
 
-            <p class="text-muted small mt-3 mb-0">
-                We'll reply to your email within one - three business days. God Bless you!
-            </p>
+            <p class="contact-note">We'll reply to your email within one - three business days. God Bless you!</p>
         </div>
 
-        <div class="col-lg-5">
-            <div class="card p-4 mb-3">
-                <h5 class="mb-3">Our Stores</h5>
-                <div class="mb-3">
-                    <h6 class="text-teal text-uppercase small mb-1">Darling Harbour</h6>
-                    <p class="mb-1 small"><strong>Address</strong><br />12 Harbourside Walk, Darling Harbour, NSW 2000</p>
-                    <p class="mb-1 small"><strong>Phone</strong><br />(+61) 007-007-001</p>
-                    <p class="mb-0 small"><strong>Hours</strong><br />Mon–Fri: 8am – 7pm<br />Sat: 10am – 5pm<br />Sun: Closed for Church</p>
+        <div>
+            <div class="store-card">
+                <h5>Our Stores</h5>
+
+                <div class="store-block">
+                    <div class="store-name">Darling Harbour</div>
+                    <div class="store-row">
+                        <span class="store-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg></span>
+                        <span class="store-text"><span class="label">Address</span>12 Harbourside Walk, Darling Harbour, NSW 2000</span>
+                    </div>
+                    <div class="store-row">
+                        <span class="store-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg></span>
+                        <span class="store-text"><span class="label">Phone</span>(+61) 007-007-001</span>
+                    </div>
+                    <div class="store-row">
+                        <span class="store-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg></span>
+                        <span class="store-text"><span class="label">Hours</span>Mon&ndash;Fri: 8am &ndash; 7pm<br />Sat: 10am &ndash; 5pm<br />Sun: Closed for Church</span>
+                    </div>
                 </div>
-                <hr />
-                <div>
-                    <h6 class="text-teal text-uppercase small mb-1">Parramatta</h6>
-                    <p class="mb-1 small"><strong>Address</strong><br />45 Church Street, Parramatta, NSW 2000</p>
-                    <p class="mb-1 small"><strong>Phone</strong><br />(+61) 007-007-002</p>
-                    <p class="mb-0 small"><strong>Hours</strong><br />Mon–Fri: 9am – 6pm<br />Sat: 10am – 4pm<br />Sun: Closed for Church</p>
+
+                <div class="store-block">
+                    <div class="store-name">Parramatta</div>
+                    <div class="store-row">
+                        <span class="store-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg></span>
+                        <span class="store-text"><span class="label">Address</span>45 Church Street, Parramatta, NSW 2000</span>
+                    </div>
+                    <div class="store-row">
+                        <span class="store-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg></span>
+                        <span class="store-text"><span class="label">Phone</span>(+61) 007-007-002</span>
+                    </div>
+                    <div class="store-row">
+                        <span class="store-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg></span>
+                        <span class="store-text"><span class="label">Hours</span>Mon&ndash;Fri: 9am &ndash; 6pm<br />Sat: 10am &ndash; 4pm<br />Sun: Closed for Church</span>
+                    </div>
                 </div>
             </div>
-            <div class="card p-4">
-                <p class="mb-0"><strong>Email</strong><br />mrjamesbondjnr.007@yahoo.com.au</p>
+
+            <div class="store-card email-card">
+                <span class="store-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 6 9 7 9-7" /><rect x="3" y="5" width="18" height="14" rx="2" /></svg></span>
+                <span>
+                    <span class="label">Email</span>
+                    <a href="mailto:mrjamesbondjnr.007@yahoo.com.au">mrjamesbondjnr.007@yahoo.com.au</a>
+                </span>
             </div>
         </div>
     </div>

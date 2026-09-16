@@ -17,6 +17,7 @@ namespace OnlineComputerStore.Core.Data
         public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
         public DbSet<AuditLogEntry> AuditLogEntries => Set<AuditLogEntry>();
         public DbSet<ProductRequest> ProductRequests => Set<ProductRequest>();
+        public DbSet<PageView> PageViews => Set<PageView>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -1,13 +1,13 @@
 @model Cart
 @{
-    ViewData["Title"] = "Your Cart";
+    ViewData["Title"] = "Cart";
 }
 <div class="container my-5">
-    <h1 class="section-title">Your Cart</h1>
+    <h1 class="section-title">Cart</h1>
 
     @if (!Model.Items.Any())
     {
-        <p class="text-muted">Your cart is empty.</p>
+        <p class="text-muted">Empty.</p>
         <a asp-controller="Shop" asp-action="Index" class="btn btn-primary">Continue Shopping</a>
     }
     else

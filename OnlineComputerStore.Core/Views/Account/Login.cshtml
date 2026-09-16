@@ -2,31 +2,222 @@
 @{
     ViewData["Title"] = "Login";
 }
-<div class="container my-5" style="max-width:420px">
-    <h1 class="section-title">Login</h1>
-    @if (TempData["PasswordReset"] != null)
-    {
-        <div class="alert alert-success">Your password has been reset. Please log in with your new password.</div>
+<style>
+    /* Scoped to this page's own rendered document — reuses the site's existing
+       theme tokens (--brand-primary/--brand-teal/--card-bg/--text-primary/etc. from
+       site.css) so it stays correct under the global light/dark toggle without
+       redefining its own color system. */
+    .auth-shell {
+        max-width: 920px;
+        margin: 48px auto;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: var(--card-radius);
+        overflow: hidden;
+        box-shadow: 0 30px 60px -24px rgba(20,33,61,.35), 0 4px 16px rgba(20,33,61,.08);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        min-height: 560px;
     }
-    <div asp-validation-summary="All" class="text-danger"></div>
-    <form asp-action="Login" asp-route-returnUrl="@ViewBag.ReturnUrl" method="post" class="card p-4 shadow-sm">
-        <div class="mb-3">
-            <label asp-for="Email" class="form-label"></label>
-            <input asp-for="Email" class="form-control" autocomplete="username" />
-            <span asp-validation-for="Email" class="text-danger small"></span>
+
+    .auth-brand {
+        position: relative;
+        background:
+            radial-gradient(circle at 15% 20%, rgba(20,184,166,.35), transparent 45%),
+            linear-gradient(155deg, var(--brand-primary) 0%, var(--brand-primary-dark) 55%, #0b3b34 130%);
+        color: #fff;
+        padding: 48px 44px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+    }
+    .auth-brand::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(rgba(255,255,255,.09) 1.5px, transparent 1.5px);
+        background-size: 22px 22px;
+        opacity: .4;
+        pointer-events: none;
+    }
+    .auth-brand-mark-row { display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; }
+    .auth-brand-mark {
+        width: 38px; height: 38px; background: var(--brand-teal); color: #04221d;
+        border-radius: 10px; display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 14px; box-shadow: 0 6px 16px rgba(20,184,166,.45);
+    }
+    .auth-brand-name { font-weight: 600; font-size: 15px; }
+    .auth-copy { position: relative; z-index: 1; margin-top: 36px; }
+    .auth-copy h2 { font-size: 28px; line-height: 1.25; margin: 0 0 14px; font-weight: 700; }
+    .auth-copy p { color: rgba(255,255,255,.78); font-size: 14.5px; line-height: 1.6; margin: 0; max-width: 320px; }
+    .auth-features { list-style: none; padding: 0; margin: 32px 0 0; display: flex; flex-direction: column; gap: 14px; position: relative; z-index: 1; }
+    .auth-features li { display: flex; align-items: center; gap: 12px; font-size: 13.5px; color: rgba(255,255,255,.92); }
+    .auth-features .ico {
+        width: 26px; height: 26px; flex: none; background: rgba(255,255,255,.12);
+        border: 1px solid rgba(255,255,255,.25); border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .auth-foot { position: relative; z-index: 1; font-size: 12px; color: rgba(255,255,255,.55); margin-top: 32px; }
+
+    .auth-form-side { padding: 52px 48px; display: flex; flex-direction: column; justify-content: center; }
+    .auth-eyebrow {
+        color: var(--brand-teal); background: var(--ai-panel-bg); border: 1px solid var(--ai-panel-border);
+        display: inline-flex; width: fit-content; padding: 5px 12px; border-radius: 999px;
+        font-size: 11.5px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; margin-bottom: 16px;
+    }
+    .auth-form-side h1 { font-size: 26px; margin: 0 0 6px; font-weight: 700; color: var(--text-primary); }
+    .auth-form-side .sub { color: var(--text-muted); font-size: 14px; margin: 0 0 24px; }
+
+    .auth-alert-success {
+        background: #eafaf3; border: 1px solid #b9edd8; color: #0d6b45;
+        padding: 12px 14px; border-radius: 10px; font-size: 13.5px; margin-bottom: 20px;
+        display: flex; gap: 10px; align-items: flex-start;
+    }
+    [data-theme="dark"] .auth-alert-success { background: rgba(20,184,166,.12); border-color: rgba(20,184,166,.3); color: #7be3c9; }
+
+    .auth-field { margin-bottom: 18px; }
+    .auth-field label { display: block; font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 7px; }
+    .auth-input-wrap { position: relative; display: flex; align-items: center; }
+    .auth-input-wrap svg.auth-input-icon { position: absolute; left: 14px; color: var(--text-muted); pointer-events: none; }
+    .auth-input-wrap input {
+        width: 100%; padding: 12px 14px 12px 42px; border-radius: 10px;
+        border: 1.5px solid var(--input-border); font-size: 14.5px;
+        background: var(--input-bg); color: var(--text-primary);
+        transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .auth-input-wrap input:focus {
+        outline: none; border-color: var(--brand-teal);
+        box-shadow: 0 0 0 4px rgba(20,184,166,.15);
+    }
+    .auth-input-wrap input.input-validation-error { border-color: #dc3545; }
+    .auth-input-wrap input.input-validation-error:focus { box-shadow: 0 0 0 4px rgba(220,53,69,.15); }
+    .auth-input-wrap .auth-toggle-eye { position: absolute; right: 12px; color: var(--text-muted); cursor: pointer; background: none; border: none; padding: 4px; display: flex; }
+    /* Chromium doesn't apply the [hidden]{display:none} UA rule to <svg> the way it
+       does for ordinary HTML elements, so without this the eye-open and eye-off
+       icons render stacked on top of each other instead of swapping. */
+    .auth-toggle-eye svg[hidden] { display: none; }
+
+    .auth-row-between { display: flex; justify-content: flex-end; margin: -8px 0 20px; }
+    .auth-row-between a { font-size: 13px; color: var(--brand-teal); text-decoration: none; font-weight: 600; }
+    .auth-row-between a:hover { text-decoration: underline; }
+
+    .btn-auth {
+        width: 100%; border: none; padding: 13px 18px; border-radius: 10px;
+        font-size: 15px; font-weight: 700; color: #04221d;
+        background: linear-gradient(135deg, #1fd6bf, var(--brand-teal));
+        box-shadow: 0 10px 22px -8px rgba(20,184,166,.55); cursor: pointer;
+    }
+    .btn-auth:hover { color: #04221d; filter: brightness(1.03); }
+
+    .auth-foot-link { text-align: center; font-size: 13.5px; color: var(--text-muted); margin: 22px 0 0; }
+    .auth-foot-link a { color: var(--text-primary); font-weight: 700; text-decoration: none; }
+    .auth-foot-link a:hover { text-decoration: underline; }
+
+    @@media (max-width: 820px) {
+        .auth-shell { grid-template-columns: 1fr; margin: 24px auto; }
+        .auth-brand { display: none; }
+        .auth-form-side { padding: 40px 26px; }
+    }
+</style>
+
+<div class="container">
+    <div class="auth-shell">
+        <div class="auth-brand">
+            <div class="auth-brand-mark-row">
+                <div class="auth-brand-mark">OCS</div>
+                <div class="auth-brand-name">Online Computer Store</div>
+            </div>
+
+            <div class="auth-copy">
+                <h2>Welcome back.<br />Good to see you again.</h2>
+                <p>Sign in to track your orders, pick up your saved cart, and check out faster next time.</p>
+            </div>
+
+            <ul class="auth-features">
+                <li><span class="ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg></span> Real-time order tracking</li>
+                <li><span class="ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg></span> Your cart and wishlist, saved</li>
+                <li><span class="ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg></span> Secure, encrypted checkout</li>
+            </ul>
+
+            <div class="auth-foot">&copy; @DateTime.Now.Year Online Computer Store</div>
         </div>
-        <div class="mb-2">
-            <label asp-for="Password" class="form-label"></label>
-            <input asp-for="Password" type="password" class="form-control" autocomplete="current-password" />
-            <span asp-validation-for="Password" class="text-danger small"></span>
+
+        <div class="auth-form-side">
+            <span class="auth-eyebrow">Member Login</span>
+            <h1>Login to your account</h1>
+            <p class="sub">Enter your details below to continue.</p>
+
+            @if (TempData["PasswordReset"] != null)
+            {
+                <div class="auth-alert-success">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex:none;margin-top:1px" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+                    <span>Your password has been reset. Please log in with your new password.</span>
+                </div>
+            }
+            <div asp-validation-summary="All" class="text-danger small mb-3"></div>
+
+            <form asp-action="Login" asp-route-returnUrl="@ViewBag.ReturnUrl" method="post">
+                <div class="auth-field">
+                    <label asp-for="Email"></label>
+                    <div class="auth-input-wrap">
+                        <svg class="auth-input-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 6 9 7 9-7" /><rect x="3" y="5" width="18" height="14" rx="2" /></svg>
+                        <input asp-for="Email" class="auth-input" autocomplete="username" placeholder="you@@example.com" />
+                    </div>
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+                <div class="auth-field" style="margin-bottom:6px;">
+                    <label asp-for="Password"></label>
+                    <div class="auth-input-wrap">
+                        <svg class="auth-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
+                        <input asp-for="Password" type="password" class="auth-input" autocomplete="current-password" placeholder="••••••••" />
+                        <button type="button" class="auth-toggle-eye" id="authTogglePassword" aria-label="Show password" title="Show password">
+                            <svg class="auth-eye-open" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" /><circle cx="12" cy="12" r="3" /></svg>
+                            <svg class="auth-eye-off" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.6 21.6 0 0 1 5.06-5.94M9.9 4.24A10.4 10.4 0 0 1 12 4c7 0 11 7 11 7a21.6 21.6 0 0 1-2.66 3.79m-6.3-.87a3 3 0 1 1-4.24-4.24" /><path d="M1 1l22 22" /></svg>
+                        </button>
+                    </div>
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+                <div class="auth-row-between">
+                    <a asp-action="ForgotPassword">Forgot your password?</a>
+                </div>
+                <button type="submit" class="btn-auth">Login</button>
+                <p class="auth-foot-link">No account? <a asp-action="Register">Create one</a></p>
+            </form>
         </div>
-        <p class="text-end small mb-3"><a asp-action="ForgotPassword">Forgot your password?</a></p>
-        <button type="submit" class="btn btn-cta btn-lg w-100">Login</button>
-        <p class="text-center mt-3 mb-0 small">No account? <a asp-action="Register">Create one</a></p>
-    </form>
+    </div>
 </div>
+
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        (function () {
+            var toggle = document.getElementById('authTogglePassword');
+            var input = document.getElementById('Password');
+            if (!toggle || !input) return;
+
+            toggle.addEventListener('click', function () {
+                // SVGElement has no .hidden IDL property (that's HTMLElement-only), so
+                // setting .hidden on an <svg> silently no-ops — toggle the actual
+                // "hidden" attribute directly instead, which works on any element.
+                var showing = input.type === 'text';
+                var eyeOpen = toggle.querySelector('.auth-eye-open');
+                var eyeOff = toggle.querySelector('.auth-eye-off');
+
+                input.type = showing ? 'password' : 'text';
+
+                if (showing) {
+                    eyeOpen.removeAttribute('hidden');
+                    eyeOff.setAttribute('hidden', '');
+                } else {
+                    eyeOpen.setAttribute('hidden', '');
+                    eyeOff.removeAttribute('hidden');
+                }
+                toggle.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+                toggle.setAttribute('title', showing ? 'Show password' : 'Hide password');
+            });
+        })();
+    </script>
 }

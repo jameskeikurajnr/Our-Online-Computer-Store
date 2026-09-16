@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using OnlineComputerStore.Core.Data;
 using OnlineComputerStore.Core.Services;
 
@@ -107,6 +108,38 @@ namespace OnlineComputerStore.Core.Controllers
                 .Select(g => new { Name = g.Key, Quantity = g.Sum(i => i.Quantity), Revenue = g.Sum(i => i.Quantity * i.UnitPrice) })
                 .OrderByDescending(x => x.Quantity)
                 .Take(5)
+                .ToList();
+
+            // Real revenue-per-day for the last 14 days (including days with no
+            // orders, at $0) so the dashboard's sales trend line reflects actual
+            // orders rather than a sample.
+            var today = DateTime.UtcNow.Date;
+            ViewBag.SalesByDay = Enumerable.Range(0, 14)
+                .Select(offset => today.AddDays(-13 + offset))
+                .Select(day => new
+                {
+                    Date = day,
+                    Revenue = orders.Where(o => o.CreatedAt.Date == day).Sum(o => o.Total)
+                })
+                .ToList();
+
+            // Real visits-per-day for the same 14-day window, recorded by
+            // PageViewMiddleware. Pulled directly from the DbContext (rather
+            // than via a service, matching how the rest of this action already
+            // reads straight from `orders`) since it's a single simple query.
+            var earliestDay = today.AddDays(-13);
+            var pageViewCounts = await _db.PageViews
+                .Where(v => v.CreatedAt >= earliestDay)
+                .GroupBy(v => v.CreatedAt.Date)
+                .Select(g => new { Day = g.Key, Count = g.Count() })
+                .ToListAsync();
+            ViewBag.TrafficByDay = Enumerable.Range(0, 14)
+                .Select(offset => today.AddDays(-13 + offset))
+                .Select(day => new
+                {
+                    Date = day,
+                    Views = pageViewCounts.Where(v => v.Day == day).Sum(v => v.Count)
+                })
                 .ToList();
 
             return View();

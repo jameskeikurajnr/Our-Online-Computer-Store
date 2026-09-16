@@ -153,7 +153,28 @@ body {
   background: linear-gradient(115deg, rgba(10,18,35,.92) 0%, rgba(10,18,35,.75) 45%, rgba(20,184,166,.35) 100%);
 }
 .hero .container { z-index: 1; }
-.hero h1 { font-weight: 700; font-size: clamp(1.8rem, 5vw + 1rem, 2.6rem); }
+.hero h1 {
+  font-weight: 800;
+  font-size: clamp(2.2rem, 4vw + 1.6rem, 3.4rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
+}
+.hero h1 .accent {
+  background: linear-gradient(100deg, #5eead4 0%, var(--brand-teal) 60%, #0d9488 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--brand-teal); /* fallback if background-clip:text is unsupported */
+}
+.hero .lead {
+  font-size: clamp(1.05rem, .6vw + 1rem, 1.25rem);
+  font-weight: 400;
+  color: rgba(255,255,255,.82);
+  letter-spacing: -0.005em;
+  margin-bottom: 1.75rem;
+  max-width: 46ch;
+}
 .hero-card {
   background: rgba(255,255,255,.1);
   border: 1px solid rgba(255,255,255,.2);

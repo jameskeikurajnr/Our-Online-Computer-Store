@@ -5,12 +5,42 @@
     var sort = (string)ViewBag.Sort;
     var page = (int)ViewBag.Page;
     var totalPages = (int)ViewBag.TotalPages;
+    var category = ViewBag.Category as string;
     var trending = ViewBag.Trending as List<Product> ?? new List<Product>();
 }
+<style>
+    /* Scoped to this page — the active-category chip shown next to the
+       heading when a filtered link (e.g. Home's "Shop Laptops" button)
+       lands here. Reuses the site's real theme tokens. */
+    .shop-filter-chip {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: var(--ai-panel-bg); border: 1px solid var(--ai-panel-border); color: var(--brand-teal);
+        font-size: 13px; font-weight: 700; padding: 5px 8px 5px 14px; border-radius: 999px;
+    }
+    .shop-filter-clear {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 20px; height: 20px; border-radius: 50%; background: rgba(20,184,166,.15);
+        color: var(--brand-teal); text-decoration: none; font-size: 12px; line-height: 1;
+    }
+    .shop-filter-clear:hover { background: rgba(20,184,166,.3); color: var(--brand-teal); }
+</style>
 <div class="container my-5">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-        <h1 class="section-title mb-0">Shop</h1>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <h1 class="section-title mb-0">Shop</h1>
+            @if (!string.IsNullOrWhiteSpace(category))
+            {
+                <span class="shop-filter-chip">
+                    @category
+                    <a asp-action="Index" asp-route-sort="@sort" class="shop-filter-clear" title="Clear filter" aria-label="Clear filter">&times;</a>
+                </span>
+            }
+        </div>
         <form method="get" class="d-flex align-items-center gap-2">
+            @if (!string.IsNullOrWhiteSpace(category))
+            {
+                <input type="hidden" name="category" value="@category" />
+            }
             <label class="form-label mb-0 small text-muted">Sort by</label>
             <select name="sort" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
                 <option value="name" selected="@(sort == "name")">Name (A–Z)</option>
@@ -24,7 +54,7 @@
     @if (trending.Any())
     {
         <div class="mb-5">
-            <h2 class="section-title fs-4">This Week Trends</h2>
+            <h2 class="section-title fs-4">@(string.IsNullOrWhiteSpace(category) ? "This Week Trends" : $"Trending in {category}")</h2>
             <div class="row g-3 row-cols-1 row-cols-md-4">
                 @foreach (var p in trending)
                 {
@@ -91,16 +121,16 @@
         <nav class="mt-5">
             <ul class="pagination justify-content-center">
                 <li class="page-item @(page <= 1 ? "disabled" : "")">
-                    <a class="page-link" asp-action="Index" asp-route-sort="@sort" asp-route-page="@(page - 1)">Previous</a>
+                    <a class="page-link" asp-action="Index" asp-route-sort="@sort" asp-route-page="@(page - 1)" asp-route-category="@category">Previous</a>
                 </li>
                 @for (int i = 1; i <= totalPages; i++)
                 {
                     <li class="page-item @(i == page ? "active" : "")">
-                        <a class="page-link" asp-action="Index" asp-route-sort="@sort" asp-route-page="@i">@i</a>
+                        <a class="page-link" asp-action="Index" asp-route-sort="@sort" asp-route-page="@i" asp-route-category="@category">@i</a>
                     </li>
                 }
                 <li class="page-item @(page >= totalPages ? "disabled" : "")">
-                    <a class="page-link" asp-action="Index" asp-route-sort="@sort" asp-route-page="@(page + 1)">Next</a>
+                    <a class="page-link" asp-action="Index" asp-route-sort="@sort" asp-route-page="@(page + 1)" asp-route-category="@category">Next</a>
                 </li>
             </ul>
         </nav>

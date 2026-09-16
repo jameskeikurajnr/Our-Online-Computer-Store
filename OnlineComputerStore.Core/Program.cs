@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using OnlineComputerStore.Core.Data;
+using OnlineComputerStore.Core.Middleware;
 using OnlineComputerStore.Core.Services;
 
 // Pin currency/date formatting to en-US ("$1,899.00") regardless of the host
@@ -123,6 +124,12 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+// Records the real traffic the admin dashboard's "Sales & Traffic" chart now
+// plots. Placed here (after routing, before the rest of the pipeline) so it
+// wraps request handling and can see the real final status code once the
+// request has actually been served.
+app.UseMiddleware<PageViewMiddleware>();
 
 app.UseRateLimiter();
 

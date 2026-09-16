@@ -1,48 +1,180 @@
 @model IEnumerable<AuditLogEntry>
 @{
     ViewData["Title"] = "Admin — Audit Log";
+
+    // Two-letter initials for the avatar badge — first letter of the first
+    // word plus first letter of the last word ("James Jnr" -> "JJ",
+    // "Sarah Mitchell" -> "SM"), falling back sensibly for single-word or
+    // blank names rather than throwing.
+    string Initials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1) return parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpperInvariant();
+        return (parts[0][0].ToString() + parts[^1][0].ToString()).ToUpperInvariant();
+    }
 }
+<style>
+    /* Scoped to this page — reuses the site's existing theme tokens from site.css
+       so the table, pills and buttons all stay correct under the global
+       light/dark toggle, matching Products/Orders/Not on Website. */
+    .auditlog-eyebrow {
+        color: var(--brand-teal);
+        background: var(--ai-panel-bg);
+        border: 1px solid var(--ai-panel-border);
+        display: inline-flex;
+        padding: 5px 12px;
+        border-radius: 999px;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: .4px;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+    }
+
+    .auditlog-header { margin-bottom: 24px; }
+    .auditlog-header h1 { font-size: 28px; margin: 0 0 6px; font-weight: 700; color: var(--text-primary); }
+    .auditlog-header .sub { color: var(--text-muted); font-size: 14px; margin: 0; }
+
+    .toolbar {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 14px; margin-bottom: 18px; flex-wrap: wrap;
+    }
+    .toolbar .note { color: var(--text-muted); font-size: 13px; margin: 0; }
+    .toolbar .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+    .clear-group {
+        display: flex; align-items: center;
+        border: 1.5px solid var(--input-border);
+        border-radius: 999px; overflow: hidden;
+        background: var(--input-bg);
+    }
+    .clear-group input {
+        border: none; background: transparent;
+        padding: 8px 4px 8px 14px; font-size: 13px; font-family: inherit;
+        color: var(--text-primary); width: 64px;
+    }
+    .clear-group input[type="month"] { width: 130px; }
+    .clear-group input:focus { outline: none; }
+    .clear-group button {
+        border: none; background: var(--track-bg);
+        padding: 8px 14px; font-size: 12.5px; font-weight: 600; font-family: inherit;
+        display: flex; align-items: center; gap: 6px;
+        cursor: pointer; white-space: nowrap; color: var(--text-primary);
+    }
+    .clear-group button:hover { color: var(--brand-teal); }
+
+    .btn-pill {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 9px 14px; border-radius: 999px;
+        font-size: 12.5px; font-weight: 600; font-family: inherit;
+        border: 1.5px solid transparent;
+        cursor: pointer; white-space: nowrap;
+        transition: background-color .15s ease;
+        appearance: none; -webkit-appearance: none;
+    }
+    .btn-pill.danger { background: #dc3545; color: #fff; }
+    .btn-pill.danger:hover { background: #c82333; }
+
+    .panel {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: var(--card-radius);
+        box-shadow: 0 10px 24px -18px rgba(20,33,61,.25);
+        overflow: hidden;
+    }
+
+    /* Always scrollable (not gated behind a media query) — see the Orders page
+       for why a fixed layout risks silently clipping content against
+       Bootstrap's own .container width on ordinary desktop screens. */
+    .table-scroll { overflow-x: auto; }
+    table.log-table { width: 100%; border-collapse: collapse; }
+    .log-table thead th {
+        text-align: left;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: .4px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--card-border);
+        background: var(--track-bg);
+        white-space: nowrap;
+    }
+    .log-table tbody td {
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--card-border);
+        vertical-align: middle;
+        font-size: 13px;
+    }
+    .log-table tbody tr:last-child td { border-bottom: none; }
+    .log-table tbody tr:hover { background: var(--track-bg); }
+
+    .timestamp-cell { color: var(--text-muted); font-size: 12.5px; white-space: nowrap; }
+
+    .admin-cell { display: flex; align-items: center; gap: 9px; white-space: nowrap; }
+    .admin-avatar {
+        width: 26px; height: 26px; border-radius: 50%; flex: none;
+        background: linear-gradient(135deg, #1fd6bf, var(--brand-teal));
+        color: #04221d; font-size: 11px; font-weight: 700;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .admin-name { font-weight: 600; color: var(--text-primary); font-size: 13px; }
+
+    .action-chip {
+        display: inline-flex; font-size: 11.5px; font-weight: 600;
+        color: var(--text-muted); background: var(--track-bg);
+        padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+    }
+
+    .details-cell {
+        max-width: 320px; color: var(--text-muted); font-size: 12.5px;
+        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .empty-row { color: var(--text-muted); font-size: 13.5px; padding: 24px; margin: 0; text-align: center; }
+
+    .scroll-hint { display: none; }
+    @@media (max-width: 760px) {
+        .scroll-hint {
+            display: block; font-size: 12px; color: var(--text-muted);
+            margin: -8px 0 10px; text-align: right;
+        }
+    }
+</style>
 
 <div class="container my-5">
+    <div class="auditlog-header">
+        <span class="auditlog-eyebrow">Admin</span>
+        <h1>Audit Log</h1>
+        <p class="sub">Your admin activity — newest first.</p>
+    </div>
 
-    <h1 class="section-title">Admin: Audit Log</h1>
-
-    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-        <p class="text-muted mb-0">
-            My Admin Activity — Newest to Latest.
-        </p>
+    <div class="toolbar">
+        <p class="note">@Model.Count() logged action@(Model.Count() == 1 ? "" : "s")</p>
 
         @if (Model.Any())
         {
-            <div class="d-flex flex-wrap gap-2 align-items-center">
-
+            <div class="controls">
                 <!-- Clear by Days -->
-                <form asp-action="ClearAuditLogByDays" method="post"
-                      class="d-flex gap-2 align-items-center"
+                <form asp-action="ClearAuditLogByDays" method="post" class="clear-group"
                       onsubmit="return confirm('Delete all entries older than the specified number of days?');">
-
                     <label class="visually-hidden" for="clearDays">Older than (days)</label>
-                    <input id="clearDays" type="number" name="days" min="1" value="30"
-                           class="form-control form-control-sm" style="width:90px"
-                           title="Older than (days)" />
-
-                    <button type="submit" class="btn btn-light btn-sm d-flex align-items-center gap-1">
-                        <i class="bi bi-calendar-minus" aria-hidden="true"></i>
+                    <input id="clearDays" type="number" name="days" min="1" value="30" title="Older than (days)" />
+                    <button type="submit">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18M9 16h1" /></svg>
                         By Days
                     </button>
                 </form>
 
                 <!-- Clear by Month -->
-                <form asp-action="ClearAuditLogByMonth" method="post"
-                      class="d-flex gap-2 align-items-center"
+                <form asp-action="ClearAuditLogByMonth" method="post" class="clear-group"
                       onsubmit="return confirm('Delete all entries from the selected month?');">
-
                     <label class="visually-hidden" for="clearMonth">Month</label>
-                    <input id="clearMonth" type="month" name="month"
-                           class="form-control form-control-sm" style="width:160px" required />
-
-                    <button type="submit" class="btn btn-light btn-sm d-flex align-items-center gap-1">
-                        <i class="bi bi-calendar" aria-hidden="true"></i>
+                    <input id="clearMonth" type="month" name="month" required />
+                    <button type="submit">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
                         By Month
                     </button>
                 </form>
@@ -50,26 +182,28 @@
                 <!-- Clear All -->
                 <form asp-action="ClearAuditLog" method="post"
                       onsubmit="return confirm('Permanently delete the entire log?');">
-
-                    <button type="submit" class="btn btn-danger btn-sm d-flex align-items-center gap-1">
-                        <i class="bi bi-trash" aria-hidden="true"></i>
+                    <button type="submit" class="btn-pill danger">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z" /></svg>
                         Clear All
                     </button>
                 </form>
-
             </div>
-
         }
     </div>
 
     @if (!Model.Any())
     {
-        <p class="text-muted">No admin actions have been logged yet.</p>
+        <div class="panel">
+            <p class="empty-row">No admin actions have been logged yet.</p>
+        </div>
     }
     else
     {
-        <div class="table-responsive">
-            <table class="table align-middle">
+        <p class="scroll-hint">Swipe to see more &rarr;</p>
+
+        <div class="panel">
+            <div class="table-scroll">
+            <table class="log-table">
                 <thead>
                     <tr>
                         <th>Timestamp</th>
@@ -82,16 +216,20 @@
                     @foreach (var e in Model)
                     {
                         <tr>
-                            <td class="small text-muted">
-                                @e.CreatedAt.ToLocalTime().ToString("MMM d, yyyy h:mm tt")
+                            <td class="timestamp-cell">@e.CreatedAt.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</td>
+                            <td>
+                                <div class="admin-cell">
+                                    <span class="admin-avatar">@Initials(e.AdminName)</span>
+                                    <span class="admin-name">@e.AdminName</span>
+                                </div>
                             </td>
-                            <td>@e.AdminName</td>
-                            <td>@e.Action</td>
-                            <td class="small">@e.Details</td>
+                            <td><span class="action-chip">@e.Action</span></td>
+                            <td class="details-cell">@e.Details</td>
                         </tr>
                     }
                 </tbody>
             </table>
+            </div>
         </div>
     }
 </div>
