@@ -4,8 +4,9 @@
 with an optional AI layer (search, on-site assistant, AI-written copy) and Stripe payments in
 test mode.
 
-**Status as of Sept 16, 2026:** Feature-complete, hardened, verified running locally, and just
-through a storefront visual-design pass (Phase 14).
+**Status as of Sept 16, 2026:** Feature-complete, hardened, verified running locally, through a
+storefront visual-design pass (Phase 14) plus a new site-traffic tracking feature, and fully
+committed and pushed to GitHub (`origin/main` @ `97e96af`).
 
 ## What's tracked here
 
@@ -35,13 +36,15 @@ build — Contact, About, the Home hero, the AI assistant panel, and Track Order
 hero buttons that did the same thing (one now genuinely filters to Laptops), grew the Laptops
 category from 6 to 12 items (33 catalog items overall), and along the way found and fixed two
 real bugs the expansion had introduced (a pagination size that hid half the new laptops, and a
-CSS specificity conflict on the redesigned Track Order validation banner).
+CSS specificity conflict on the redesigned Track Order validation banner). Alongside Phase 14,
+a page-view tracking feature (`PageViewMiddleware`) landed too, replacing the Admin Dashboard's
+hardcoded "Traffic" sample data with a real count of page visits.
 
 What's left is almost entirely assessment deliverables (final report, two presentations, final
 submission), filling in the remaining unit test gaps (`CartService`, `UserService`,
-`StripePaymentService`, `ProductRequestService`, and now the new Shop category-filter logic),
-and sourcing real product photography for the 6 laptops added this sprint — see `BACKLOG.md`
-for the full list.
+`StripePaymentService`, `ProductRequestService`, the new Shop category-filter logic, and now
+`PageViewMiddleware`'s counting logic), and sourcing real product photography for the 6
+laptops added this sprint — see `BACKLOG.md` for the full list.
 
 ## Repository
 
@@ -78,7 +81,7 @@ and `Parent Task` linking subtasks to their phase:
    old list first or import into a fresh list, rather than ending up with duplicates. If you've
    already imported an earlier version of this file (e.g. through Phase 13), importing this one
    fresh will duplicate everything up to 13.6 — either delete that list first, or manually add
-   just the new Phase 14 rows (14.0–14.9) to your existing ClickUp list instead of re-importing
+   just the new Phase 14 rows (14.0–14.11) to your existing ClickUp list instead of re-importing
    the whole CSV.
 6. Once imported, spot-check a couple of phases (Phase 14 is the newest) to confirm dates,
    tags, and nesting landed as expected.
@@ -92,44 +95,24 @@ inside the ASP.NET Core project itself, so they're easy to find without digging 
 
 ## Committing this sprint's work
 
-**Update (Sept 16):** when this was actually run, `git status` showed a lot more than just
-Phase 14 — several earlier sprints' work (Phase 10–13: wishlist, account/admin redesign, the
-"Not on Website" audit-log feature, AI assistant refinements) had also never been committed.
-It also turned up a `Middleware/`, `Models/PageView.cs`, and an `AddPageViews` migration that
-nobody could immediately account for — those were deliberately left out of the commit below
-until their origin is confirmed (check their file timestamps in Explorer — Properties →
-Details — to see whether they're old scaffolding or something written more recently).
+**Everything is committed and pushed as of Sept 16, 2026.** For the record, here's what
+actually happened getting there:
 
-The `.db`/`.db-shm`/`.db-wal` files are already git-ignored (`*.db*` in `.gitignore`), so the
-live-database update mentioned in `SPRINT.md` doesn't need a commit. From a terminal in the
-repo root — **paste this as one single line** (a multi-line backtick-continued version of this
-command was tried first and silently failed to stage anything when pasted into the Developer
-PowerShell pane, most likely because the paste didn't preserve the line continuations):
+`git status` first turned up several earlier sprints' work (Phase 10–13: wishlist,
+account/admin redesign, the "Not on Website" audit-log feature, AI assistant refinements) that
+had never been committed, on top of this sprint's own changes. All of it — plus the root-level
+`README.md`/`README-1.md`/`DOCUMENTATION.md`, superseded by their `Claude outputs/` equivalents
+— went into one catch-up commit: `2a1b6ed`.
 
-```powershell
-git status
-```
+That same `git status` also turned up an untracked page-view tracking feature (`PageView`
+model, `AddPageViews` migration, `PageViewMiddleware`) of unclear origin, deliberately held
+back from that first commit pending confirmation. That turned out to matter: `Program.cs` and
+`StoreDbContext.cs` — already committed in the same push — directly referenced it, so leaving
+it out meant the pushed repo couldn't actually compile from a fresh clone. Once traced, it was
+committed on its own: `13b15bb`, followed by a small doc-only commit recording all of this in
+`SPRINT.md`/`BACKLOG.md`: `97e96af`.
 
-```powershell
-git add "OnlineComputerStore.Core/Controllers/AdminController.cs" "OnlineComputerStore.Core/Controllers/AssistantController.cs" "OnlineComputerStore.Core/Controllers/ShopController.cs" "OnlineComputerStore.Core/Data/DbInitializer.cs" "OnlineComputerStore.Core/Data/StoreDbContext.cs" "OnlineComputerStore.Core/Migrations/StoreDbContextModelSnapshot.cs" "OnlineComputerStore.Core/Program.cs" "OnlineComputerStore.Core/Services/AiAssistantService.cs" "OnlineComputerStore.Core/Services/AiServiceBase.cs" "OnlineComputerStore.Core/Services/IAiAssistantService.cs" "OnlineComputerStore.Core/Views/Account/Login.cshtml" "OnlineComputerStore.Core/Views/Account/Register.cshtml" "OnlineComputerStore.Core/Views/Admin/AuditLog.cshtml" "OnlineComputerStore.Core/Views/Admin/Dashboard.cshtml" "OnlineComputerStore.Core/Views/Admin/Orders.cshtml" "OnlineComputerStore.Core/Views/Admin/ProductRequests.cshtml" "OnlineComputerStore.Core/Views/Admin/Products.cshtml" "OnlineComputerStore.Core/Views/Cart/Index.cshtml" "OnlineComputerStore.Core/Views/Home/About.cshtml" "OnlineComputerStore.Core/Views/Home/Contact.cshtml" "OnlineComputerStore.Core/Views/Home/Index.cshtml" "OnlineComputerStore.Core/Views/Orders/Track.cshtml" "OnlineComputerStore.Core/Views/Orders/TrackResult.cshtml" "OnlineComputerStore.Core/Views/Shared/_AssistantWidget.cshtml" "OnlineComputerStore.Core/Views/Shared/_Layout.cshtml" "OnlineComputerStore.Core/Views/Shop/Details.cshtml" "OnlineComputerStore.Core/Views/Shop/Index.cshtml" "OnlineComputerStore.Core/Views/Wishlist/Index.cshtml" "OnlineComputerStore.Core/wwwroot/css/assistant.css" "OnlineComputerStore.Core/wwwroot/css/site.css" "OnlineComputerStore.Core/wwwroot/js/assistant.js" "OnlineComputerStore.Core/wwwroot/images/placeholder-acer-swift-go.jpg" "OnlineComputerStore.Core/wwwroot/images/placeholder-dell-inspiron.jpg" "OnlineComputerStore.Core/wwwroot/images/placeholder-lg-gram.jpg" "OnlineComputerStore.Core/wwwroot/images/placeholder-microsoft-surface.jpg" "OnlineComputerStore.Core/wwwroot/images/placeholder-msi-stealth.jpg" "OnlineComputerStore.Core/wwwroot/images/placeholder-razer-blade.jpg" "OnlineComputerStore.Core/wwwroot/images/product-placeholder.jpg" "DOCUMENTATION.md" "README.md" "README-1.md" "Claude outputs/BACKLOG.md" "Claude outputs/DOCUMENTATION.md" "Claude outputs/README.md" "Claude outputs/SPRINT.md" "Claude outputs/clickup_import_wbs.csv"
-```
-
-```powershell
-git status
-```
-
-```powershell
-git commit -m "Catch up uncommitted work through Phase 14: account/admin views, AI assistant refinements, wishlist, and storefront UX modernization"
-git push origin main
-```
-
-Run `git status` before *and* after the `git add` — before, to confirm the list above still
-matches what's actually changed (this project's history has shown that "what I touched this
-session" and "what's uncommitted" can drift apart); after, to confirm only the intended files
-are staged and that `Middleware/`, `Models/PageView.cs`, and the `AddPageViews` migration files
-are still sitting untouched under "Untracked files" until you've confirmed what they are. If
-`git status` after the `git add` still shows nothing staged, the paste broke again — try typing
-`git add ` followed by pasting just the quoted file list, or paste into a plain `cmd.exe`/
-Windows Terminal window instead of the Developer PowerShell pane.
-`README.md`/`README-1.md`/`DOCUMENTATION.md` at the repo root show as deleted — that's expected
-(superseded by the `Claude outputs/` versions) and safe to include in the commit.
+**Current state:** `git status` in the repo root should show nothing outstanding except
+`commit-phase14.ps1` (the staging script used for the catch-up commit — harmless to keep
+around or delete). The `.db`/`.db-shm`/`.db-wal` files are git-ignored (`*.db*` in
+`.gitignore`) and were never part of any commit — that's expected, not an oversight.

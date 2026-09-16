@@ -64,6 +64,7 @@ code.
 | `WishlistItem` | UserId, ProductId, AddedAt | One entry per user per product (unique index) |
 | `PasswordResetToken` | UserId, Token (unique), ExpiresAt, Used | Single-use, 1-hour expiry, backs the forgot-password flow |
 | `AuditLogEntry` | AdminUserId, AdminName, Action, Details, CreatedAt | Every admin action; see §5 for the "Clear All" design |
+| `PageView` | Path, CreatedAt | One row per real page request; see §12 |
 
 Schema changes are managed through EF Core code-first migrations, applied automatically at
 startup via `context.Database.Migrate()` in `DbInitializer.Initialize()` — there's no manual
@@ -77,6 +78,7 @@ migration step for whoever runs the app. Migrations added on top of the initial 
 | `AddStoreImprovements` | `StockQuantity` on `Product`; `ProductReviews`, `WishlistItems`, `PasswordResetTokens`, `AuditLogEntries` tables |
 | `AddClickAndCollect` | `FulfillmentMethod`, `PickupLocation` on `Order` |
 | `AddProfilePhotoToUser` | `ProfilePhotoUrl` on `AppUser` |
+| `AddPageViews` | `PageViews` table (`Id`, `Path`, `CreatedAt`) — see §12 |
 
 ## 3. Security model
 
@@ -388,3 +390,23 @@ approval → make the real `.cshtml`/`.cs` change, preserving every existing mod
 Playwright and check for console errors → push. This caught at least one real bug before it
 shipped (the `text-danger`/custom-color conflict on `Track.cshtml`, WBS 14.6) that wasn't
 visible in the mockup itself.
+
+## 12. Site traffic tracking (PageView)
+
+`PageViewMiddleware` (registered in `Program.cs` after `UseRouting`, so it can see the real
+final status code) logs one `PageView` row per real page request — a `GET` that actually
+returned `200 OK`, excluding `/Admin/*` (so an admin loading their own dashboard doesn't
+inflate the number that same dashboard shows them), `/api/*` calls, and anything file-like.
+It deliberately records nothing that identifies a visitor — no IP address, no cookie or
+session id, no user agent — just the path and the time, which is enough to count visits per
+day. This feeds the Admin Dashboard's "Traffic" line, which previously showed hardcoded sample
+data. A save failure inside the middleware is swallowed intentionally: logging traffic should
+never be able to break the page it's counting.
+
+This landed in the same working copy as the Phase 14 catch-up commit but wasn't captured as its
+own WBS task at build time — its origin wasn't immediately obvious from `git status` alone, and
+tracing it surfaced a real risk worth noting: `Program.cs` and `StoreDbContext.cs` already
+referenced `PageViewMiddleware`/`PageView` by the time this was found, so the feature had to be
+committed to keep the repository compiling on a fresh clone, not just as a nice-to-have. Added
+to `clickup_import_wbs.csv` retroactively as WBS 14.10–14.11 once confirmed. See `SPRINT.md`
+for the full account.
